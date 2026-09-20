@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@import "@fontsource/frank-ruhl-libre/400.css";
+@import "@fontsource/frank-ruhl-libre/500.css";
+@import "@fontsource/frank-ruhl-libre/600.css";
+@import "@fontsource/ibm-plex-sans-hebrew/400.css";
+@import "@fontsource/ibm-plex-sans-hebrew/500.css";
+@import "@fontsource/ibm-plex-sans-hebrew/600.css";
+
+/*
+  Runtime design tokens — plain CSS custom properties so the "ספרייה"/"סטודיו" direction
+  and light/dark theme can be toggled at runtime by adding a class to <html>, exactly like
+  the validated design-reference prototype (samples/design-reference in the Codex kit).
+  Tailwind's @theme below just aliases these, so utility classes (bg-surface, text-ink, ...)
+  automatically follow whichever theme/direction is active — no dark: or direction: variants needed.
+*/
+:root {
+  --bg: #f5f4ef;
+  --surface: #fffefa;
+  --soft: #eeeee6;
+  --ink: #202d29;
+  --muted: #747c73;
+  --line: #dedfd5;
+  --brand: #1d5c4b;
+  --tint: #e7eee7;
+  --gold: #8a681c;
+  --goldbg: #f5edda;
+  --radius: 13px;
+  --font-display: 'Frank Ruhl Libre', Georgia, serif;
+  --font-ui: 'IBM Plex Sans Hebrew', Arial, sans-serif;
+}
+
+html.dark {
+  --bg: #121c19;
+  --surface: #192520;
+  --soft: #21302a;
+  --ink: #e7ebe2;
+  --muted: #a1ada3;
+  --line: #324138;
+  --brand: #6cc4a2;
+  --tint: #253d32;
+  --gold: #d7b461;
+  --goldbg: #393323;
+}
+
+html.studio {
+  --radius: 5px;
+  --font-display: 'IBM Plex Sans Hebrew', Arial, sans-serif;
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-soft: var(--soft);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-tint: var(--tint);
+  --color-gold: var(--gold);
+  --color-goldbg: var(--goldbg);
+  --font-display: var(--font-display);
+  --font-ui: var(--font-ui);
+  --radius-token: var(--radius);
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+}
+
+/* embedded numbers / case citations / Latin runs inside Hebrew text */
+.ltr-run {
+  unicode-bidi: isolate;
+  direction: ltr;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.9em;
+}

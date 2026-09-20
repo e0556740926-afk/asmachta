@@ -1,0 +1,61 @@
+export const t = {
+  appName: 'אסמכתא',
+  nav: {
+    home: 'בית',
+    courses: 'קורסים',
+    practice: 'תרגול',
+    agent: 'סוכן',
+    more: 'עוד',
+  },
+  auth: {
+    signInTitle: 'כניסה לאסמכתא',
+    signUpTitle: 'הרשמה לאסמכתא',
+    email: 'אימייל',
+    password: 'סיסמה',
+    displayName: 'שם מלא',
+    signIn: 'כניסה',
+    signUp: 'הרשמה',
+    switchToSignUp: 'עוד אין לך חשבון? להרשמה',
+    switchToSignIn: 'כבר רשום? לכניסה',
+    privacyConsent: 'קראתי ואני מסכימ/ה למדיניות הפרטיות',
+    error: 'קרתה תקלה. נסו שוב.',
+  },
+  pending: {
+    title: 'ההרשמה שלך התקבלה',
+    body: 'החשבון ממתין לאישור המנהל. תקבל/י הודעה כשהגישה תיפתח.',
+    signOut: 'התנתקות',
+  },
+  home: {
+    title: 'היום שלי',
+    subtitle: 'מבט אישי על הלמידה',
+    coursesSection: 'הקורסים שלך',
+    seeAll: 'לכל הקורסים',
+  },
+  courses: {
+    title: 'הקורסים',
+    subtitle: 'ספריית הקורסים שלך',
+    newCourse: 'קורס חדש',
+    empty: 'עדיין אין קורסים. התחילו בהוספת הקורס הראשון.',
+  },
+  course: {
+    tabs: {
+      summaries: 'סיכומים',
+      rulings: 'פסקי דין וחקיקה',
+      practice: 'תרגול',
+      shared: 'שיתופי',
+    },
+    emptySummaries: 'עדיין אין סיכומים בקורס הזה.',
+    emptyRulings: 'עדיין לא הועלו פסקי דין או חקיקה.',
+    emptyPractice: 'תרגול ייפתח לאחר שיעלו סיכומים.',
+    emptyShared: 'עדיין אין חומר שיתופי בקורס הזה.',
+  },
+  theme: {
+    light: 'בהיר',
+    dark: 'כהה',
+    system: 'לפי המערכת',
+  },
+  direction: {
+    library: 'ספרייה',
+    studio: 'סטודיו',
+  },
+}
