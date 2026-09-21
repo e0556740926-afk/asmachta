@@ -217,3 +217,34 @@ export type QuizAttemptRow = {
   started_at: string
   submitted_at: string | null
 }
+
+// ============================================================
+// Community submissions: members share content, admin approves/rejects
+// ============================================================
+
+export type SubmissionType = 'summary' | 'note' | 'question' | 'ruling'
+export type SubmissionStatus = 'pending' | 'approved' | 'merged' | 'rejected' | 'removed'
+
+export type SubmissionRow = {
+  id: string
+  uploader_id: string
+  course_id: string
+  topic_id: string | null
+  type: SubmissionType | null
+  title: string
+  body_html: string | null
+  document_id: string | null
+  rights_declared: boolean
+  status: SubmissionStatus
+  decision_reason: string | null
+  decided_by: string | null
+  decided_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** A submission joined with its uploader's display name (and the deciding admin's, when present). */
+export type SubmissionWithProfiles = SubmissionRow & {
+  uploader: { display_name: string | null } | null
+  decider: { display_name: string | null } | null
+}

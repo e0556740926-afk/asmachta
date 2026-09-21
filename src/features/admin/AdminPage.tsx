@@ -2,11 +2,13 @@ import { useSearchParams } from 'react-router-dom'
 import { t } from '../../i18n/he'
 import { UsersTab } from './UsersTab'
 import { CoursesTab } from './CoursesTab'
+import { SubmissionsTab } from './SubmissionsTab'
 import { SettingsTab } from './SettingsTab'
 
 const TABS = [
   { key: 'users', label: t.admin.tabs.users },
   { key: 'courses', label: t.admin.tabs.courses },
+  { key: 'submissions', label: t.admin.tabs.submissions },
   { key: 'settings', label: t.admin.tabs.settings },
 ] as const
 
@@ -35,6 +37,7 @@ export function AdminPage() {
       </div>
       {tab === 'users' && <UsersTab />}
       {tab === 'courses' && <CoursesTab />}
+      {tab === 'submissions' && <SubmissionsTab />}
       {tab === 'settings' && <SettingsTab />}
     </div>
   )

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { supabase, type Course } from '../../lib/supabase'
-import { EmptyState } from '../../components/ui/Primitives'
 import { useAgentPanel } from '../../components/agent/AgentPanelContext'
 import { SummariesPanel } from './SummariesPanel'
 import { RulingsPanel } from './RulingsPanel'
 import { PracticePanel } from './PracticePanel'
+import { SharedPanel } from './SharedPanel'
 import { t } from '../../i18n/he'
 
 const TABS = [
@@ -58,7 +58,7 @@ export function CoursePage() {
       ) : active.key === 'practice' ? (
         <PracticePanel courseId={course.id} courseTitle={course.title} />
       ) : (
-        <EmptyState title={active.empty} />
+        <SharedPanel courseId={course.id} />
       )}
       <button
         type="button"
