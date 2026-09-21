@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { supabase, type Course } from '../../lib/supabase'
 import { EmptyState } from '../../components/ui/Primitives'
 import { useAgentPanel } from '../../components/agent/AgentPanelContext'
+import { SummariesPanel } from './SummariesPanel'
 import { t } from '../../i18n/he'
 
 const TABS = [
@@ -48,7 +49,7 @@ export function CoursePage() {
           </button>
         ))}
       </div>
-      <EmptyState title={active.empty} />
+      {active.key === 'summaries' ? <SummariesPanel courseId={course.id} /> : <EmptyState title={active.empty} />}
       <button
         type="button"
         onClick={() => openAgent(course.title)}

@@ -90,6 +90,8 @@ export function AuthPage() {
                 {t.auth.email}
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   className="rounded-md border border-line bg-bg px-3 py-2 text-ink"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -128,6 +130,8 @@ export function AuthPage() {
                 <label className="grid gap-1 text-sm">
                   {t.auth.displayName}
                   <input
+                    name="name"
+                    autoComplete="name"
                     className="rounded-md border border-line bg-bg px-3 py-2 text-ink"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
@@ -139,6 +143,8 @@ export function AuthPage() {
                 {t.auth.email}
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   className="rounded-md border border-line bg-bg px-3 py-2 text-ink"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -149,6 +155,8 @@ export function AuthPage() {
                 {t.auth.password}
                 <input
                   type="password"
+                  name="password"
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   className="rounded-md border border-line bg-bg px-3 py-2 text-ink"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

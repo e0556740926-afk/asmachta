@@ -18,6 +18,7 @@ test-results
 playwright-report
 blob-report
 playwright/.cache
+docs-report
 
 # Environment variables (real Supabase keys live here — never commit)
 .env

@@ -32,3 +32,40 @@ export type AppSettings = {
   require_signup_approval: boolean
   app_name: string
 }
+
+export type DocumentKind = 'summary' | 'ruling' | 'law' | 'exam' | 'slides' | 'other'
+
+export type DocumentRow = {
+  id: string
+  blob_sha256: string
+  kind: DocumentKind
+  original_filename: string | null
+  owner_id: string | null
+  visibility: 'core' | 'shared' | 'private'
+  status: 'approved' | 'pending' | 'rejected'
+  created_at: string
+}
+
+export type BlobRow = {
+  sha256: string
+  bytes: number
+  mime: string
+  storage_path: string
+  ref_count: number
+}
+
+export type Summary = {
+  id: string
+  course_id: string
+  document_id: string | null
+  version: number
+  title: string
+  status: 'draft' | 'published'
+  created_at: string
+  updated_at: string
+}
+
+/** A summary joined with its underlying document + blob, as returned by the list query. */
+export type SummaryWithFile = Summary & {
+  documents: (DocumentRow & { blobs: BlobRow | null }) | null
+}
