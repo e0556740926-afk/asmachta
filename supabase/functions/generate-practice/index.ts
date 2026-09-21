@@ -17,6 +17,21 @@ function json(body: unknown, status = 200): Response {
   })
 }
 
+// Gemini occasionally returns 503 ("high demand") or 429 (rate limit) — both are usually
+// transient, so retry a couple of times with a short backoff before giving up.
+async function fetchGeminiWithRetry(url: string, init: RequestInit, maxAttempts = 3): Promise<Response> {
+  let res: Response
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    res = await fetch(url, init)
+    if (res.ok) return res
+    const retryable = res.status === 503 || res.status === 429
+    if (!retryable || attempt === maxAttempts) return res
+    await res.text().catch(() => '') // drain the body before retrying
+    await new Promise((r) => setTimeout(r, attempt * 900))
+  }
+  return res!
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
@@ -47,7 +62,12 @@ Deno.serve(async (req: Request) => {
 
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     if (!apiKey) return json({ error: 'not_configured' }, 501)
-    const model = Deno.env.get('GEMINI_MODEL') || 'gemini-flash-latest'
+    // Pinned to a specific stable GA model rather than the `-latest` alias: that alias hot-swaps
+    // to whatever Gemini just released, which tends to be capacity-constrained (503s) right
+    // after launch. gemini-2.5-flash was tried first but Google has retired it for new callers
+    // (404, "no longer available to new users") — gemini-3.6-flash is their suggested, stable
+    // replacement. Override with the GEMINI_MODEL secret any time, no redeploy needed.
+    const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.6-flash'
 
     const responseSchema =
       mode === 'cards'
@@ -85,14 +105,17 @@ Deno.serve(async (req: Request) => {
       'שימו לב: אין לכם גישה לחומרי הקורס הספציפיים שהועלו לאפליקציה (סיכומים, פסקי דין) — ' +
       'התבססו על הידע המשפטי הכללי שלכם לגבי נושא הקורס, ואל תמציאו ציטוטים או מקורות ספציפיים.'
 
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: `${prompt}\n\n${disclaimer}` }] }],
-        generationConfig: { responseMimeType: 'application/json', responseSchema },
-      }),
-    })
+    const geminiRes = await fetchGeminiWithRetry(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: `${prompt}\n\n${disclaimer}` }] }],
+          generationConfig: { responseMimeType: 'application/json', responseSchema },
+        }),
+      }
+    )
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text().catch(() => '')
@@ -104,7 +127,8 @@ Deno.serve(async (req: Request) => {
           () => {},
           () => {}
         )
-      return json({ error: 'upstream_error' }, 502)
+      const busy = geminiRes.status === 503 || geminiRes.status === 429
+      return json({ error: busy ? 'upstream_busy' : 'upstream_error' }, 502)
     }
 
     const geminiData = await geminiRes.json()

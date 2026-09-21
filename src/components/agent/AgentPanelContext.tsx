@@ -28,6 +28,8 @@ function errorMessage(code: string | null): string {
       return t.agentPanel.errorNotActive
     case 'quota_exceeded':
       return t.agentPanel.errorQuota
+    case 'upstream_busy':
+      return t.agentPanel.errorBusy
     default:
       return t.agentPanel.errorGeneric
   }
