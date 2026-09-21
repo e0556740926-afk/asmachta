@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { supabase, type SummaryWithFile } from '../../lib/supabase'
+import { supabase, type CourseRulingWithFile } from '../../lib/supabase'
 import { useAuth } from '../../app/AuthContext'
 import { Button } from '../../components/ui/Button'
-import { Card, EmptyState, StatusChip, Skeleton, Num } from '../../components/ui/Primitives'
+import { Card, EmptyState, Skeleton, Num } from '../../components/ui/Primitives'
 import { addExternalDocument, getDownloadUrl, uploadDocument } from '../../lib/upload'
 import { t } from '../../i18n/he'
 
@@ -12,30 +12,51 @@ function formatBytes(bytes?: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function SummariesPanel({ courseId }: { courseId: string }) {
+/**
+ * Rulings & legislation tab: admin attaches a document (file or Google Docs link) to the course as
+ * a `rulings` row (+ `course_rulings` join); members browse/open it. Deliberately skips the rich
+ * case-metadata / AI-brief / citation-graph machinery the schema already anticipates (case_number,
+ * court, judges, brief_status, …) — this is a functional M1 pass, not the full ruling pipeline.
+ */
+export function RulingsPanel({ courseId }: { courseId: string }) {
   const { profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
-  const [items, setItems] = useState<SummaryWithFile[] | null>(null)
+  const [items, setItems] = useState<CourseRulingWithFile[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [linkMode, setLinkMode] = useState(false)
   const [linkTitle, setLinkTitle] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
+  const [fileTitle, setFileTitle] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   async function load() {
     const { data } = await supabase
-      .from('summaries')
-      .select('*, documents(*, blobs(*))')
+      .from('course_rulings')
+      .select('*, rulings(*, documents(*, blobs(*)))')
       .eq('course_id', courseId)
-      .order('created_at', { ascending: false })
-    setItems((data as SummaryWithFile[] | null) ?? [])
+    const rows = ((data as CourseRulingWithFile[] | null) ?? []).slice()
+    rows.sort((a, b) => (b.rulings?.created_at ?? '').localeCompare(a.rulings?.created_at ?? ''))
+    setItems(rows)
   }
 
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId])
+
+  async function attachToCourse(documentId: string, title: string) {
+    const { data: ruling, error: rulingError } = await supabase
+      .from('rulings')
+      .insert({ title, document_id: documentId })
+      .select('id')
+      .single()
+    if (rulingError) throw rulingError
+    const { error: linkError } = await supabase
+      .from('course_rulings')
+      .insert({ course_id: courseId, ruling_id: (ruling as { id: string }).id })
+    if (linkError) throw linkError
+  }
 
   async function onFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -44,12 +65,10 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
     setBusy(true)
     setError(null)
     try {
-      const { documentId } = await uploadDocument(file, { kind: 'summary', ownerId: profile.id, visibility: 'core' })
-      const title = file.name.replace(/\.[^./]+$/, '')
-      const { error: insertError } = await supabase
-        .from('summaries')
-        .insert({ course_id: courseId, document_id: documentId, title, status: 'published' })
-      if (insertError) throw insertError
+      const { documentId } = await uploadDocument(file, { kind: 'ruling', ownerId: profile.id, visibility: 'core' })
+      const title = fileTitle.trim() || file.name.replace(/\.[^./]+$/, '')
+      await attachToCourse(documentId, title)
+      setFileTitle('')
       await load()
     } catch {
       setError(t.course.uploadError)
@@ -72,11 +91,8 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
     setBusy(true)
     setError(null)
     try {
-      const { documentId } = await addExternalDocument(linkUrl, { kind: 'summary', ownerId: profile.id, visibility: 'core' })
-      const { error: insertError } = await supabase
-        .from('summaries')
-        .insert({ course_id: courseId, document_id: documentId, title: linkTitle.trim(), status: 'published' })
-      if (insertError) throw insertError
+      const { documentId } = await addExternalDocument(linkUrl, { kind: 'ruling', ownerId: profile.id, visibility: 'core' })
+      await attachToCourse(documentId, linkTitle.trim())
       setLinkTitle('')
       setLinkUrl('')
       setLinkMode(false)
@@ -88,13 +104,13 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
     }
   }
 
-  async function onDownload(item: SummaryWithFile) {
-    const externalUrl = item.documents?.external_url
-    if (externalUrl) {
-      window.open(externalUrl, '_blank', 'noopener,noreferrer')
+  async function onOpen(item: CourseRulingWithFile) {
+    const doc = item.rulings?.documents
+    if (doc?.external_url) {
+      window.open(doc.external_url, '_blank', 'noopener,noreferrer')
       return
     }
-    const path = item.documents?.blobs?.storage_path
+    const path = doc?.blobs?.storage_path
     if (!path) {
       setError(t.course.downloadError)
       return
@@ -107,18 +123,11 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
     }
   }
 
-  async function onTogglePublish(item: SummaryWithFile) {
-    const nextStatus = item.status === 'published' ? 'draft' : 'published'
-    await supabase.from('summaries').update({ status: nextStatus }).eq('id', item.id)
+  async function onDelete(item: CourseRulingWithFile) {
+    if (!item.ruling_id) return
+    await supabase.from('rulings').delete().eq('id', item.ruling_id)
     await load()
   }
-
-  async function onDelete(item: SummaryWithFile) {
-    await supabase.from('summaries').delete().eq('id', item.id)
-    await load()
-  }
-
-  const visible = (items ?? []).filter((s) => isAdmin || s.status === 'published')
 
   return (
     <div className="grid gap-4">
@@ -126,6 +135,13 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
         <div className="grid gap-3">
           <div className="flex items-center gap-2">
             <input ref={fileInputRef} type="file" className="hidden" onChange={onFilePicked} disabled={busy} />
+            <input
+              className="min-w-0 flex-1 rounded-md border border-line bg-bg px-3 py-2 text-sm text-ink"
+              placeholder={t.course.linkTitlePlaceholder}
+              value={linkMode ? linkTitle : fileTitle}
+              onChange={(e) => (linkMode ? setLinkTitle(e.target.value) : setFileTitle(e.target.value))}
+              disabled={busy}
+            />
             <Button
               type="button"
               variant={linkMode ? 'quiet' : 'primary'}
@@ -145,13 +161,6 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
             <form onSubmit={onAddLink} className="flex flex-wrap items-center gap-2">
               <input
                 className="min-w-0 flex-1 rounded-md border border-line bg-bg px-3 py-2 text-sm text-ink"
-                placeholder={t.course.linkTitlePlaceholder}
-                value={linkTitle}
-                onChange={(e) => setLinkTitle(e.target.value)}
-                disabled={busy}
-              />
-              <input
-                className="min-w-0 flex-[2] rounded-md border border-line bg-bg px-3 py-2 text-sm text-ink"
                 placeholder={t.course.linkUrlPlaceholder}
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
@@ -170,48 +179,39 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
           <Skeleton className="h-16" />
           <Skeleton className="h-16" />
         </div>
-      ) : visible.length === 0 ? (
-        <EmptyState title={t.course.emptySummaries} />
+      ) : items.length === 0 ? (
+        <EmptyState title={t.course.emptyRulings} />
       ) : (
         <div className="grid gap-2">
-          {visible.map((item) => (
-            <Card key={item.id} className="flex items-center justify-between gap-3 p-4">
-              <div className="min-w-0">
-                <p className="truncate font-medium">{item.title}</p>
-                <p className="truncate text-xs text-muted">
-                  {item.documents?.external_url
-                    ? 'Google Docs'
-                    : item.documents?.original_filename}
-                  {item.documents?.blobs?.bytes ? (
-                    <>
-                      {' '}
-                      · <Num>{formatBytes(item.documents.blobs.bytes)}</Num>
-                    </>
-                  ) : null}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {isAdmin && (
-                  <StatusChip tone={item.status === 'published' ? 'brand' : 'pending'}>
-                    {item.status === 'published' ? t.course.statusPublished : t.course.statusDraft}
-                  </StatusChip>
-                )}
-                <Button type="button" variant="quiet" onClick={() => onDownload(item)}>
-                  {item.documents?.external_url ? t.course.open : t.course.download}
-                </Button>
-                {isAdmin && (
-                  <>
-                    <Button type="button" variant="quiet" onClick={() => onTogglePublish(item)}>
-                      {item.status === 'published' ? t.course.unpublish : t.course.publish}
-                    </Button>
+          {items.map((item) => {
+            const doc = item.rulings?.documents
+            return (
+              <Card key={item.id} className="flex items-center justify-between gap-3 p-4">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{item.rulings?.title}</p>
+                  <p className="truncate text-xs text-muted">
+                    {doc?.external_url ? 'Google Docs' : doc?.original_filename}
+                    {doc?.blobs?.bytes ? (
+                      <>
+                        {' '}
+                        · <Num>{formatBytes(doc.blobs.bytes)}</Num>
+                      </>
+                    ) : null}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button type="button" variant="quiet" onClick={() => onOpen(item)}>
+                    {doc?.external_url ? t.course.open : t.course.download}
+                  </Button>
+                  {isAdmin && (
                     <Button type="button" variant="quiet" onClick={() => onDelete(item)}>
                       {t.course.deleteFile}
                     </Button>
-                  </>
-                )}
-              </div>
-            </Card>
-          ))}
+                  )}
+                </div>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>

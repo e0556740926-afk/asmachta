@@ -4,6 +4,8 @@ import { supabase, type Course } from '../../lib/supabase'
 import { EmptyState } from '../../components/ui/Primitives'
 import { useAgentPanel } from '../../components/agent/AgentPanelContext'
 import { SummariesPanel } from './SummariesPanel'
+import { RulingsPanel } from './RulingsPanel'
+import { PracticePanel } from './PracticePanel'
 import { t } from '../../i18n/he'
 
 const TABS = [
@@ -49,7 +51,15 @@ export function CoursePage() {
           </button>
         ))}
       </div>
-      {active.key === 'summaries' ? <SummariesPanel courseId={course.id} /> : <EmptyState title={active.empty} />}
+      {active.key === 'summaries' ? (
+        <SummariesPanel courseId={course.id} />
+      ) : active.key === 'rulings' ? (
+        <RulingsPanel courseId={course.id} />
+      ) : active.key === 'practice' ? (
+        <PracticePanel courseId={course.id} courseTitle={course.title} />
+      ) : (
+        <EmptyState title={active.empty} />
+      )}
       <button
         type="button"
         onClick={() => openAgent(course.title)}

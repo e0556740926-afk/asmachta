@@ -37,7 +37,8 @@ export type DocumentKind = 'summary' | 'ruling' | 'law' | 'exam' | 'slides' | 'o
 
 export type DocumentRow = {
   id: string
-  blob_sha256: string
+  blob_sha256: string | null
+  external_url: string | null
   kind: DocumentKind
   original_filename: string | null
   owner_id: string | null
@@ -68,4 +69,80 @@ export type Summary = {
 /** A summary joined with its underlying document + blob, as returned by the list query. */
 export type SummaryWithFile = Summary & {
   documents: (DocumentRow & { blobs: BlobRow | null }) | null
+}
+
+export type Ruling = {
+  id: string
+  title: string | null
+  document_id: string | null
+  created_at: string
+}
+
+/** A course_rulings row joined through to its ruling + underlying document + blob. */
+export type CourseRulingWithFile = {
+  id: string
+  course_id: string
+  ruling_id: string
+  rulings: (Ruling & { documents: (DocumentRow & { blobs: BlobRow | null }) | null }) | null
+}
+
+// ============================================================
+// Practice: flashcards + quizzes
+// ============================================================
+
+export type CardRow = {
+  id: string
+  course_id: string
+  topic_id: string | null
+  front: string
+  back: string
+  origin: 'ai' | 'admin' | 'term' | 'annotation' | null
+  status: 'approved' | 'draft'
+  created_at: string
+}
+
+export type CardState = {
+  user_id: string
+  card_id: string
+  due: string | null
+  scheduled_days: number | null
+  reps: number
+  lapses: number
+  state: 'new' | 'learning' | 'review' | null
+  last_review: string | null
+}
+
+/** A card joined with the current user's own review state (null if never studied). */
+export type CardWithState = CardRow & { card_states: CardState[] }
+
+export type QuizRow = {
+  id: string
+  course_id: string
+  topic_id: string | null
+  title: string | null
+  created_at: string
+}
+
+export type QuizQuestionOption = string
+
+export type QuizQuestionRow = {
+  id: string
+  quiz_id: string
+  type: 'mcq' | 'short'
+  stem: string
+  options: QuizQuestionOption[] | null
+  answer: string | null
+  explanation: string | null
+}
+
+export type QuizWithQuestions = QuizRow & { quiz_questions: QuizQuestionRow[] }
+
+export type QuizAttemptRow = {
+  id: string
+  user_id: string
+  quiz_id: string
+  answers: Record<string, string> | null
+  score: number | null
+  started_at: string
+  submitted_at: string | null
 }

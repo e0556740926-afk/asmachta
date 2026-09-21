@@ -75,6 +75,35 @@ export async function uploadDocument(
   return { documentId: (doc as { id: string }).id, deduped }
 }
 
+/**
+ * Registers an external link (e.g. a Google Docs URL) as a `documents` row, with no file upload
+ * or `blobs` row involved. Used when a course member wants to attach a doc that already lives on
+ * Google Docs instead of uploading a file.
+ */
+export async function addExternalDocument(
+  url: string,
+  opts: { kind: DocumentKind; ownerId: string; title?: string; visibility?: 'core' | 'shared' | 'private' }
+): Promise<{ documentId: string }> {
+  const trimmed = url.trim()
+  if (!/^https?:\/\//i.test(trimmed)) throw new Error('invalid_url')
+
+  const { data: doc, error: docError } = await supabase
+    .from('documents')
+    .insert({
+      external_url: trimmed,
+      kind: opts.kind,
+      original_filename: opts.title ?? null,
+      owner_id: opts.ownerId,
+      visibility: opts.visibility ?? 'core',
+      status: 'approved',
+    })
+    .select('id')
+    .single()
+  if (docError) throw docError
+
+  return { documentId: (doc as { id: string }).id }
+}
+
 /** Signed, time-limited download URL for a document's underlying file. */
 export async function getDownloadUrl(storagePath: string, expiresInSeconds = 3600): Promise<string> {
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, expiresInSeconds)
