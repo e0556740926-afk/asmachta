@@ -106,4 +106,16 @@ export async function ensureManualSummary(courseId: string): Promise<string> {
   return (data as { id: string }).id
 }
 
+/** Marks a topic as opened by this user, for the home page's "continue where you left off" card.
+ * Upserts on the (user_id, target_type, target_id) primary key so repeated opens just bump
+ * `updated_at`. Best-effort — a failure here shouldn't block reading the topic. */
+export async function recordTopicProgress(userId: string, topicId: string): Promise<void> {
+  await supabase
+    .from('reading_progress')
+    .upsert(
+      { user_id: userId, target_type: 'topic', target_id: topicId, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,target_type,target_id' }
+    )
+}
+
 export type { TopicSectionRow }

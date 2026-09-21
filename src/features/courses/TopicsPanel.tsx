@@ -10,6 +10,7 @@ import {
   deleteTopic,
   ensureManualSummary,
   fetchTopics,
+  recordTopicProgress,
   updateSection,
   updateTopicTitle,
 } from '../../lib/topics'
@@ -58,6 +59,11 @@ export function TopicsPanel({ courseId, refreshKey }: { courseId: string; refres
     }
   }
 
+  function handleOpenTopic(topicId: string) {
+    setOpenTopicId(topicId)
+    if (profile) recordTopicProgress(profile.id, topicId).catch(() => {})
+  }
+
   async function onDeleteTopic(topicId: string) {
     if (!window.confirm(t.topics.confirmDeleteTopic)) return
     await deleteTopic(topicId)
@@ -101,7 +107,7 @@ export function TopicsPanel({ courseId, refreshKey }: { courseId: string; refres
             <button
               key={tp.id}
               type="button"
-              onClick={() => setOpenTopicId(tp.id)}
+              onClick={() => handleOpenTopic(tp.id)}
               className="flex items-center justify-between gap-3 rounded-md bg-soft p-3 text-start text-sm hover:bg-tint"
             >
               <span className="truncate font-medium">{tp.title}</span>
