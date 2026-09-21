@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { supabase, type Course } from '../../lib/supabase'
 import { EmptyState } from '../../components/ui/Primitives'
+import { useAgentPanel } from '../../components/agent/AgentPanelContext'
 import { t } from '../../i18n/he'
 
 const TABS = [
@@ -16,6 +17,7 @@ export function CoursePage() {
   const [params, setParams] = useSearchParams()
   const [course, setCourse] = useState<Course | null>(null)
   const tab = (params.get('tab') as (typeof TABS)[number]['key']) || 'summaries'
+  const { openAgent } = useAgentPanel()
 
   useEffect(() => {
     if (!id) return
@@ -47,6 +49,14 @@ export function CoursePage() {
         ))}
       </div>
       <EmptyState title={active.empty} />
+      <button
+        type="button"
+        onClick={() => openAgent(course.title)}
+        className="fixed inset-x-4 bottom-20 z-30 mx-auto flex max-w-md items-center gap-2 rounded-full border border-line bg-surface px-4 py-3 text-sm text-muted shadow-lg hover:border-brand hover:text-brand md:bottom-6 md:start-6 md:end-auto md:mx-0"
+      >
+        <span aria-hidden="true">✦</span>
+        {t.course.agentBar}
+      </button>
     </div>
   )
 }

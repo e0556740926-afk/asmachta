@@ -50,18 +50,27 @@ create table public.app_settings (
 insert into public.app_settings (id) values (true);
 
 -- First person to ever sign up becomes the active admin automatically (single-admin product).
+-- Later signups become 'pending' unless app_settings.require_signup_approval is off.
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   is_first boolean;
+  needs_approval boolean;
 begin
   select not exists(select 1 from public.profiles) into is_first;
-  insert into public.profiles (id, display_name, role, status, accepted_privacy_at)
+  select coalesce(require_signup_approval, true) into needs_approval from public.app_settings where id = true;
+  insert into public.profiles (id, display_name, avatar_url, role, status, accepted_privacy_at)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email,'@',1)),
+    coalesce(
+      new.raw_user_meta_data->>'display_name',
+      new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'name',
+      split_part(new.email,'@',1)
+    ),
+    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
     case when is_first then 'admin' else 'member' end,
-    case when is_first then 'active' else 'pending' end,
+    case when is_first then 'active' when needs_approval then 'pending' else 'active' end,
     now()
   );
   return new;

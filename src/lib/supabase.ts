@@ -26,3 +26,9 @@ export type Course = {
   archived: boolean
   position: number
 }
+
+export type AppSettings = {
+  id: true
+  require_signup_approval: boolean
+  app_name: string
+}

@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Test / QA output
+screenshots
+test-results
+playwright-report
+blob-report
+playwright/.cache
+
 # Environment variables (real Supabase keys live here — never commit)
 .env
 .env.*
