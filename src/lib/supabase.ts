@@ -248,3 +248,40 @@ export type SubmissionWithProfiles = SubmissionRow & {
   uploader: { display_name: string | null } | null
   decider: { display_name: string | null } | null
 }
+
+// ============================================================
+// Exam simulator: past exams with an admin-written rubric + AI-graded essay attempts
+// ============================================================
+
+/** Stored in `exams.rubric` — grading guidance plus an optional suggested time limit for the
+ * simulated session (the schema has no dedicated duration column). */
+export type ExamRubric = { text: string; durationMinutes?: number }
+
+export type ExamRow = {
+  id: string
+  course_id: string
+  document_id: string | null
+  title: string | null
+  year: number | null
+  solution_document_id: string | null
+  rubric: ExamRubric | null
+}
+
+export type ExamWithFile = ExamRow & { documents: (DocumentRow & { blobs: BlobRow | null }) | null }
+
+export type ExamFeedback = {
+  score: number
+  strengths: string[]
+  improvements: string[]
+  criteriaFeedback?: { criterion: string; feedback: string }[]
+}
+
+export type ExamAttemptRow = {
+  id: string
+  user_id: string
+  exam_id: string
+  answer_html: string | null
+  started_at: string
+  submitted_at: string | null
+  feedback: ExamFeedback | null
+}
