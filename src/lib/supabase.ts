@@ -106,8 +106,15 @@ export type TopicWithSections = TopicRow & { topic_sections: TopicSectionRow[] }
 
 export type Ruling = {
   id: string
+  case_type: string | null
+  case_number: string | null
   title: string | null
+  court: string | null
+  decision_date: string | null
+  status: 'in_force' | 'further_hearing' | 'overturned' | 'unknown'
   document_id: string | null
+  brief_status: 'none' | 'ai' | 'reviewed'
+  citation: string | null
   created_at: string
 }
 
@@ -117,6 +124,37 @@ export type CourseRulingWithFile = {
   course_id: string
   ruling_id: string
   rulings: (Ruling & { documents: (DocumentRow & { blobs: BlobRow | null }) | null }) | null
+}
+
+// ============================================================
+// Ruling reader: AI brief + citable numbered source paragraphs
+// ============================================================
+
+export type RulingParagraphRow = {
+  id: string
+  ruling_id: string
+  opinion_id: string | null
+  n: number
+  seq: number
+  text: string
+  page: number | null
+}
+
+/** One part of an AI-generated brief (a section of prose that may cite specific paragraph
+ * numbers from the ruling's original text) or a short key-point chip that jumps to paragraphs. */
+export type BriefPart = { heading: string; content: string; paragraphNumbers: number[] }
+export type BriefKeyPoint = { label: string; paragraphNumbers: number[] }
+export type BriefSections = { parts: BriefPart[]; keyPoints: BriefKeyPoint[] }
+
+export type RulingBriefRow = {
+  id: string
+  ruling_id: string
+  sections: BriefSections | null
+  model: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+  created_at: string
+  updated_at: string
 }
 
 // ============================================================
