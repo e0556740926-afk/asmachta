@@ -61,6 +61,8 @@ export type Summary = {
   document_id: string | null
   version: number
   title: string
+  raw_html: string | null
+  outline: unknown
   status: 'draft' | 'published'
   created_at: string
   updated_at: string
@@ -70,6 +72,37 @@ export type Summary = {
 export type SummaryWithFile = Summary & {
   documents: (DocumentRow & { blobs: BlobRow | null }) | null
 }
+
+// ============================================================
+// Topics: AI-organized, per-course "folders" that summaries get split into
+// ============================================================
+
+export type TopicRow = {
+  id: string
+  course_id: string
+  parent_id: string | null
+  title: string
+  position: number
+  slug: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type TopicSectionRow = {
+  id: string
+  topic_id: string
+  summary_id: string
+  position: number
+  heading: string | null
+  html: string | null
+  source_anchor: string | null
+  ai_reason: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** A topic joined with its ordered sections, as returned by the topics-view query. */
+export type TopicWithSections = TopicRow & { topic_sections: TopicSectionRow[] }
 
 export type Ruling = {
   id: string
