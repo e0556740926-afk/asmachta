@@ -31,7 +31,15 @@ export async function uploadDocument(
   opts: { kind: DocumentKind; ownerId: string; visibility?: 'core' | 'shared' | 'private' }
 ): Promise<UploadResult> {
   const sha256 = await sha256Hex(file)
-  const storagePath = `${sha256}/${file.name}`
+  // Supabase Storage rejects any non-ASCII character in an object key (InvalidKey) — so a Hebrew
+  // filename (the normal case for this app) made every upload fail before it ever reached the
+  // blobs/documents insert. The real, human-readable name is already kept separately in
+  // `documents.original_filename` and is what the UI displays, so the storage key itself never
+  // needs to carry it — keep only a Latin-safe extension, with the hash (already unique per
+  // content) giving the path its uniqueness.
+  const extMatch = file.name.match(/\.[a-zA-Z0-9]{1,10}$/)
+  const safeExt = extMatch ? extMatch[0].toLowerCase() : ''
+  const storagePath = `${sha256}/file${safeExt}`
 
   const { data: existingBlob } = await supabase.from('blobs').select('sha256, ref_count').eq('sha256', sha256).maybeSingle()
 
