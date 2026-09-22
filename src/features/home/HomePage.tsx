@@ -200,13 +200,11 @@ export function HomePage() {
               <>
                 <div className="pulse-stats">
                   <div>
-                    <bdi>
-                      <Num>{pulse.topicsThisWeek}</Num>
-                    </bdi>
+                    <bdi>{pulse.topicsThisWeek}</bdi>
                     <span>{t.home.pulseTopics}</span>
                   </div>
                   <div>
-                    <bdi>{pulse.accuracyPct !== null ? <Num>{pulse.accuracyPct}%</Num> : '—'}</bdi>
+                    <bdi>{pulse.accuracyPct !== null ? `${pulse.accuracyPct}%` : '—'}</bdi>
                     <span>{t.home.pulseAccuracy}</span>
                   </div>
                 </div>
