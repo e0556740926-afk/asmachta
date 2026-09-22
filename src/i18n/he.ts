@@ -133,6 +133,19 @@ export const t = {
     aiReasonPrefix: 'שויך אוטומטית על ידי AI:',
     manualBadge: 'נוסף ידנית',
     rawDocuments: 'המסמכים שהועלו',
+    // "Manual processing" — bypass the built-in Gemini call: copy a ready-made prompt to any AI
+    // chat by hand, then upload the JSON result it returns, straight into topics/topic_sections.
+    manualProcess: 'עיבוד ידני',
+    manualIntro:
+      'אם שירות ה-AI המובנה ממשיך להיכשל או להיות עמוס — אפשר לעבד את הסיכום ידנית: להעתיק את הפרומפט הבא, להדביק אותו בכל שירות AI (ChatGPT, Claude וכו׳), ולהעלות כאן את קובץ ה-JSON שיחזיר.',
+    manualCopyPrompt: 'העתקת הפרומפט',
+    manualCopied: 'הועתק!',
+    manualExtracting: 'מחלץ טקסט מהמסמך…',
+    manualUploadLabel: 'העלאת קובץ JSON עם התוצאה',
+    manualParseError: 'הקובץ שהועלה אינו תואם לפורמט הנדרש — ודאו שזה מערך JSON תקין של אובייקטים עם topic ו-content.',
+    manualApplyError: 'שמירת התוצאה נכשלה. נסו שוב.',
+    manualSuccess: 'עובד בהצלחה',
+    manualClose: 'סגירה',
   },
   rulingReader: {
     backToList: '→ חזרה לרשימת פסקי הדין',

@@ -62,16 +62,26 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-    const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } })
-    const {
-      data: { user },
-    } = await userClient.auth.getUser()
-    if (!user) return json({ error: 'unauthorized' }, 401)
-
     const admin = createClient(supabaseUrl, serviceRoleKey)
-    const { data: profile } = await admin.from('profiles').select('role, status').eq('id', user.id).maybeSingle()
-    if (!profile || profile.status !== 'active' || profile.role !== 'admin') return json({ error: 'not_admin' }, 403)
+
+    // The automatic every-15-minutes retry (process-pending-rulings, invoked by pg_cron) has no
+    // end-user session to authenticate — it calls straight through with the project's own service
+    // role key as the bearer token, which only server-side code ever holds. Treat that one exact
+    // value as a trusted system caller and skip the admin-profile check; everyone else still needs
+    // a real logged-in admin, exactly as before.
+    const isSystemCaller = authHeader === `Bearer ${serviceRoleKey}`
+    let callerUserId: string | null = null
+    if (!isSystemCaller) {
+      const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } })
+      const {
+        data: { user },
+      } = await userClient.auth.getUser()
+      if (!user) return json({ error: 'unauthorized' }, 401)
+
+      const { data: profile } = await admin.from('profiles').select('role, status').eq('id', user.id).maybeSingle()
+      if (!profile || profile.status !== 'active' || profile.role !== 'admin') return json({ error: 'not_admin' }, 403)
+      callerUserId = user.id
+    }
 
     const body = await req.json().catch(() => null)
     const rulingId: string | undefined = body?.rulingId
@@ -194,7 +204,7 @@ Deno.serve(async (req: Request) => {
       console.error('gemini error', geminiRes.status, errText)
       admin
         .from('ai_calls')
-        .insert({ user_id: user.id, function: 'generate-ruling-brief', model, ok: false, error: `http_${geminiRes.status}` })
+        .insert({ user_id: callerUserId, function: 'generate-ruling-brief', model, ok: false, error: `http_${geminiRes.status}` })
         .then(
           () => {},
           () => {}
@@ -227,7 +237,7 @@ Deno.serve(async (req: Request) => {
     admin
       .from('ai_calls')
       .insert({
-        user_id: user.id,
+        user_id: callerUserId,
         function: 'generate-ruling-brief',
         model,
         input_tokens: geminiData?.usageMetadata?.promptTokenCount ?? null,
