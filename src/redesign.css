@@ -75,4 +75,35 @@ button:not(:disabled),a { cursor:pointer; }
  .course-agent { bottom:calc(80px + env(safe-area-inset-bottom)); }
  .portal-page > div:first-child.flex { flex-wrap:wrap; gap:16px; }
 }
+/* Home page "learning pulse" aside — real data (reviews + reading_progress), styled to match
+   the fuller design prototype's desk-aside widgets. */
+.daily-practice { background:#e9efdf; border:1px solid #d6dfc9; padding:20px; border-radius:var(--radius); color:#244530; }
+.daily-practice .eyebrow { color:#456442; font-size:11px; }
+.daily-practice .big-number { font:56px/1.2 var(--font-display); margin:14px 0 0; display:flex; align-items:baseline; gap:10px; }
+.daily-practice .big-number small { font:12px var(--font-ui); color:#5a7052; }
+.daily-practice p { font-size:13px; color:#5b6c50; margin:10px 0 18px; }
+.daily-practice a { display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:500; color:#244530; }
+.tiny-streak { display:flex; justify-content:space-between; border-top:1px solid #d0dcc5; margin-top:16px; padding-top:14px; color:#6c7e61; font-size:10px; }
+.tiny-streak span { border-radius:50%; display:grid; place-items:center; width:22px; height:22px; }
+.tiny-streak .active { background:#2a5338; color:#fff; }
+.tiny-streak .today { box-shadow:0 0 0 2px #2a5338; }
+.learning-pulse { padding:18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+.pulse-stats { display:flex; justify-content:space-between; margin-top:16px; }
+.pulse-stats bdi { display:block; font:23px/1.3 ui-monospace,monospace; color:var(--brand); }
+.pulse-stats span { font-size:10px; color:var(--muted); }
+.week-chart { height:60px; display:flex; align-items:end; gap:8px; border-bottom:1px solid var(--line); margin:12px 0; }
+.week-chart i { display:block; min-height:3px; flex:1; background:#c7d6bc; border-radius:3px 3px 0 0; font-style:normal; }
+.week-chart i.today { background:#547755; }
+html.dark .daily-practice { background:#263e2c; color:#dbe9cf; border-color:#3b553c; }
+html.dark .daily-practice p, html.dark .daily-practice .eyebrow, html.dark .daily-practice a { color:#b2c6a6; }
+html.dark .tiny-streak .active { background:#8baa74; color:#16240f; }
+html.dark .tiny-streak .today { box-shadow:0 0 0 2px #8baa74; }
+html.dark .week-chart i { background:#3a4f39; }
+html.dark .week-chart i.today { background:#8baa74; }
+@media(max-width:767px) {
+ .daily-practice { padding:16px; }
+ .daily-practice .big-number { font-size:42px; }
+ .tiny-streak span { width:17px; height:17px; font-size:9px; }
+ .week-chart { height:50px; }
+}
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }

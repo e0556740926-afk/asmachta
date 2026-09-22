@@ -5,11 +5,13 @@ import { supabase, type Course } from '../../lib/supabase'
 import {
   fetchContinueReading,
   fetchHomeStats,
+  fetchLearningPulse,
   fetchQuickReviewCard,
   fetchRecentActivity,
   type ActivityItem,
   type ContinueItem,
   type HomeStats,
+  type LearningPulse,
   type QuickReviewCard,
 } from '../../lib/home'
 import { Card, EmptyState, Num, Skeleton } from '../../components/ui/Primitives'
@@ -23,6 +25,7 @@ export function HomePage() {
   const [stats, setStats] = useState<HomeStats | null>(null)
   const [activity, setActivity] = useState<ActivityItem[] | null>(null)
   const [quickReview, setQuickReview] = useState<QuickReviewCard | null | undefined>(undefined)
+  const [pulse, setPulse] = useState<LearningPulse | undefined>(undefined)
 
   useEffect(() => {
     supabase
@@ -38,6 +41,7 @@ export function HomePage() {
     fetchContinueReading(profile.id).then(setContinueItem)
     fetchHomeStats(profile.id).then(setStats)
     fetchQuickReviewCard(profile.id).then(setQuickReview)
+    fetchLearningPulse(profile.id).then(setPulse)
   }, [profile])
 
   useEffect(() => {
@@ -148,25 +152,76 @@ export function HomePage() {
           )}
         </Card>
 
-        <Card>
-          <h2 className="mb-4 font-display text-lg font-medium">{t.home.quickReviewTitle}</h2>
-          {quickReview === undefined ? (
-            <Skeleton className="h-24" />
-          ) : quickReview ? (
-            <div className="grid gap-3">
-              <p className="text-xs text-muted">{quickReview.courseTitle}</p>
-              <p className="text-sm font-medium">{quickReview.front}</p>
-              <Link
-                to={`/courses/${quickReview.courseId}?tab=practice`}
-                className="justify-self-start rounded-md bg-tint px-3 py-1.5 text-sm text-brand hover:opacity-90"
-              >
-                {t.home.quickReviewCta} ←
-              </Link>
+        <aside className="desk-aside grid content-start gap-4">
+          <div className="daily-practice">
+            <div className="flex items-center justify-between">
+              <span className="eyebrow">{t.home.quickReviewTitle}</span>
+              <span aria-hidden="true">🗂</span>
             </div>
-          ) : (
-            <p className="text-sm text-muted">{t.home.quickReviewEmpty}</p>
-          )}
-        </Card>
+            {stats === null ? (
+              <Skeleton className="mt-3 h-16 bg-surface/40" />
+            ) : (
+              <>
+                <p className="big-number">
+                  <Num>{stats.cardsDue}</Num>
+                  <small>{t.home.statsCards}</small>
+                </p>
+                {quickReview === undefined ? (
+                  <Skeleton className="mt-3 h-8 bg-surface/40" />
+                ) : quickReview ? (
+                  <>
+                    <p className="truncate">{quickReview.front}</p>
+                    <Link to={`/courses/${quickReview.courseId}?tab=practice`}>{t.home.quickReviewCta} ←</Link>
+                  </>
+                ) : (
+                  <p>{t.home.quickReviewEmpty}</p>
+                )}
+              </>
+            )}
+            {pulse && (
+              <div className="tiny-streak">
+                {pulse.dayLabels.map((label, i) => (
+                  <span key={i} className={[pulse.activeDays[i] ? 'active' : '', i === 6 ? 'today' : ''].join(' ').trim()}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="learning-pulse">
+            <div className="flex items-center justify-between">
+              <strong>{t.home.pulseTitle}</strong>
+              <span className="text-xs text-muted">{t.home.pulseSubtitle}</span>
+            </div>
+            {pulse === undefined ? (
+              <Skeleton className="mt-4 h-24" />
+            ) : (
+              <>
+                <div className="pulse-stats">
+                  <div>
+                    <bdi>
+                      <Num>{pulse.topicsThisWeek}</Num>
+                    </bdi>
+                    <span>{t.home.pulseTopics}</span>
+                  </div>
+                  <div>
+                    <bdi>{pulse.accuracyPct !== null ? <Num>{pulse.accuracyPct}%</Num> : '—'}</bdi>
+                    <span>{t.home.pulseAccuracy}</span>
+                  </div>
+                </div>
+                <div className="week-chart" aria-label={t.home.pulseChartLabel}>
+                  {pulse.dailyCounts.map((c, i) => {
+                    const max = Math.max(...pulse.dailyCounts, 1)
+                    const pct = c > 0 ? Math.max(8, Math.round((c / max) * 100)) : 3
+                    return <i key={i} className={i === 6 ? 'today' : ''} style={{ height: `${pct}%` }} />
+                  })}
+                </div>
+                {pulse.dailyCounts.every((c) => c === 0) && <p className="text-xs text-muted">{t.home.pulseEmpty}</p>}
+              </>
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   )

@@ -110,6 +110,63 @@ export async function fetchRecentActivity(limit = 5): Promise<ActivityItem[]> {
   }))
 }
 
+export type LearningPulse = {
+  /** Review counts for the last 7 days, oldest→newest; index 6 is today. */
+  dailyCounts: number[]
+  /** Hebrew day-letter (א/ב/ג/...) for each of the same 7 days. */
+  dayLabels: string[]
+  activeDays: boolean[]
+  /** % of reviews rated "good" in the window, or null when there were none to judge. */
+  accuracyPct: number | null
+  /** Distinct topics opened in the last 7 days. */
+  topicsThisWeek: number
+}
+
+const HEBREW_DAY_LETTERS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'] // Date#getDay(): 0=Sun..6=Sat
+
+/** Real week-in-review data for the home page's "learning pulse" widget — driven by the
+ * `reviews` log (flashcard ratings) and `reading_progress`, not placeholder numbers. */
+export async function fetchLearningPulse(userId: string): Promise<LearningPulse> {
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const windowStart = new Date(startOfToday.getTime() - 6 * 24 * 60 * 60 * 1000)
+
+  const [{ data: reviewRows }, { data: progressRows }] = await Promise.all([
+    supabase.from('reviews').select('rating, reviewed_at').eq('user_id', userId).gte('reviewed_at', windowStart.toISOString()),
+    supabase
+      .from('reading_progress')
+      .select('target_id')
+      .eq('user_id', userId)
+      .eq('target_type', 'topic')
+      .gte('updated_at', windowStart.toISOString()),
+  ])
+
+  const dailyCounts = Array(7).fill(0)
+  const dayLabels = Array(7).fill('')
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startOfToday.getTime() - (6 - i) * 24 * 60 * 60 * 1000)
+    dayLabels[i] = HEBREW_DAY_LETTERS[d.getDay()]
+  }
+
+  let correct = 0
+  let total = 0
+  for (const row of reviewRows ?? []) {
+    const reviewedAt = new Date(row.reviewed_at as string).getTime()
+    const dayIndex = Math.floor((reviewedAt - windowStart.getTime()) / (24 * 60 * 60 * 1000))
+    if (dayIndex >= 0 && dayIndex < 7) dailyCounts[dayIndex]++
+    total++
+    if ((row.rating as number) >= 3) correct++
+  }
+
+  return {
+    dailyCounts,
+    dayLabels,
+    activeDays: dailyCounts.map((c) => c > 0),
+    accuracyPct: total > 0 ? Math.round((correct / total) * 100) : null,
+    topicsThisWeek: new Set((progressRows ?? []).map((r) => r.target_id as string)).size,
+  }
+}
+
 export type QuickReviewCard = { cardId: string; front: string; courseId: string; courseTitle: string }
 
 /** One due card (earliest-due first) to surface as a quick-review prompt on the home page. */

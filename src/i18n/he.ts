@@ -59,6 +59,12 @@ export const t = {
     quickReviewEmpty: 'אין כרגע כרטיסים לחזרה — כל הכבוד!',
     quickReviewCta: 'למעבר לתרגול',
     coursesEmpty: 'עדיין אין קורסים פעילים.',
+    pulseTitle: 'השבוע שלך',
+    pulseSubtitle: 'עד עכשיו',
+    pulseTopics: 'נושאים הושלמו',
+    pulseAccuracy: 'דיוק בתרגול',
+    pulseChartLabel: 'פעילות תרגול בשבעת הימים האחרונים',
+    pulseEmpty: 'עדיין אין נתוני תרגול השבוע.',
   },
   courses: {
     title: 'הקורסים',
