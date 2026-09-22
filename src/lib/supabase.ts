@@ -249,6 +249,16 @@ export type SubmissionWithProfiles = SubmissionRow & {
   decider: { display_name: string | null } | null
 }
 
+/** A "report a mistake" note filed against a submission — visible to its uploader and admins. */
+export type SubmissionFlag = {
+  id: string
+  submission_id: string
+  flagged_by: string
+  note: string
+  created_at: string
+  flagger: { display_name: string | null } | null
+}
+
 // ============================================================
 // Exam simulator: past exams with an admin-written rubric + AI-graded essay attempts
 // ============================================================
