@@ -151,6 +151,43 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
     if (rulingId) await runGenerate(rulingId, { googleDocsUrl: urlForGenerate })
   }
 
+  // Retry brief generation for an already-attached ruling — same purpose as the "reorganize"
+  // button in SummariesPanel, surfaced here in the list too (not only inside the reader) so a
+  // failed/never-run generation (e.g. Gemini was overloaded right after upload) is one click away.
+  async function onReorganize(item: CourseRulingWithFile) {
+    const ruling = item.rulings
+    const doc = ruling?.documents
+    if (!ruling) return
+    setGenerating(true)
+    setGenError(null)
+    try {
+      let result: Awaited<ReturnType<typeof generateRulingBrief>>
+      if (doc?.external_url) {
+        result = await generateRulingBrief(ruling.id, { googleDocsUrl: doc.external_url })
+      } else if (doc?.blobs?.storage_path) {
+        const url = await getDownloadUrl(doc.blobs.storage_path)
+        const res = await fetch(url)
+        const blob = await res.blob()
+        const filename = doc.original_filename || ruling.title || 'ruling'
+        const file = new File([blob], filename, { type: doc.blobs.mime })
+        const text = await extractTextFromFile(file)
+        if (!text) {
+          setGenError(t.rulingReader.generateErrorExtractFailed)
+          return
+        }
+        result = await generateRulingBrief(ruling.id, { text })
+      } else {
+        return
+      }
+      if ('error' in result) setGenError(mapGenerateError(result.error))
+      else await load()
+    } catch {
+      setGenError(t.rulingReader.generateErrorGeneric)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   async function onOpen(item: CourseRulingWithFile) {
     const doc = item.rulings?.documents
     if (doc?.external_url) {
@@ -265,9 +302,14 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
                     {doc?.external_url ? t.course.open : t.course.download}
                   </Button>
                   {isAdmin && (
-                    <Button type="button" variant="quiet" onClick={() => onDelete(item)}>
-                      {t.course.deleteFile}
-                    </Button>
+                    <>
+                      <Button type="button" variant="quiet" onClick={() => onReorganize(item)} disabled={generating}>
+                        {t.rulingReader.regenerateBrief}
+                      </Button>
+                      <Button type="button" variant="quiet" onClick={() => onDelete(item)}>
+                        {t.course.deleteFile}
+                      </Button>
+                    </>
                   )}
                 </div>
               </Card>
