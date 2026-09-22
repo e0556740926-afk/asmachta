@@ -92,6 +92,12 @@ export function RulingReader({
   const briefParts = brief?.sections?.parts ?? []
   const keyPoints = brief?.sections?.keyPoints ?? []
 
+  // Old rows can carry the literal string "null" (the AI wrote it for fields it couldn't
+  // determine, back when nothing filtered it out before saving) — never render that as text.
+  const caseType = ruling.case_type && ruling.case_type.toLowerCase() !== 'null' ? ruling.case_type : null
+  const caseNumber = ruling.case_number && ruling.case_number.toLowerCase() !== 'null' ? ruling.case_number : null
+  const court = ruling.court && ruling.court.toLowerCase() !== 'null' ? ruling.court : null
+
   return (
     <div className="ruling-reader grid gap-4">
       <div className="flex items-center justify-between gap-3">
@@ -107,13 +113,13 @@ export function RulingReader({
 
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          {ruling.case_type && (
+          {caseType && (
             <StatusChip>
-              {ruling.case_type}
-              {ruling.case_number ? <> <Num>{ruling.case_number}</Num></> : null}
+              {caseType}
+              {caseNumber ? <> <Num>{caseNumber}</Num></> : null}
             </StatusChip>
           )}
-          {ruling.court && <StatusChip tone="brand">{ruling.court}</StatusChip>}
+          {court && <StatusChip tone="brand">{court}</StatusChip>}
         </div>
         <h2 className="mt-2 font-display text-xl font-medium">{ruling.title}</h2>
         {ruling.decision_date && (

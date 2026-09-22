@@ -266,12 +266,24 @@ Deno.serve(async (req: Request) => {
     })
     if (briefError) console.error('brief insert error', briefError)
 
+    // The model is asked to write "null" (as text) for fields it can't determine, since the
+    // response schema declares them as plain strings rather than nullable — filter that (and
+    // blank/whitespace-only strings) back out so it never lands in the DB as a literal "null".
+    function meaningful(v?: string): string | undefined {
+      const trimmed = v?.trim()
+      return trimmed && trimmed.toLowerCase() !== 'null' ? trimmed : undefined
+    }
+
     const metaUpdate: Record<string, string> = {}
-    if (caseMeta.caseType) metaUpdate.case_type = caseMeta.caseType
-    if (caseMeta.caseNumber) metaUpdate.case_number = caseMeta.caseNumber
-    if (caseMeta.court) metaUpdate.court = caseMeta.court
+    const caseType = meaningful(caseMeta.caseType)
+    const caseNumber = meaningful(caseMeta.caseNumber)
+    const court = meaningful(caseMeta.court)
+    const citation = meaningful(caseMeta.citation)
+    if (caseType) metaUpdate.case_type = caseType
+    if (caseNumber) metaUpdate.case_number = caseNumber
+    if (court) metaUpdate.court = court
     if (caseMeta.decisionDate && /^\d{4}-\d{2}-\d{2}$/.test(caseMeta.decisionDate)) metaUpdate.decision_date = caseMeta.decisionDate
-    if (caseMeta.citation) metaUpdate.citation = caseMeta.citation
+    if (citation) metaUpdate.citation = citation
     await admin
       .from('rulings')
       .update({ brief_status: 'ai', ...metaUpdate })
