@@ -73,7 +73,7 @@ export function SubmissionsTab() {
       ) : (
         <div className="grid gap-3">
           {items.map((s) => (
-            <Card key={s.id} className="grid gap-2 p-4">
+            <Card key={s.id} className="grid min-w-0 gap-2 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <StatusChip>{typeLabel(s.type)}</StatusChip>
@@ -81,8 +81,8 @@ export function SubmissionsTab() {
                 </div>
                 <span className="text-xs text-muted">{s.uploader?.display_name ?? ''}</span>
               </div>
-              <p className="font-medium">{s.title}</p>
-              <p className="whitespace-pre-wrap text-sm text-ink">{s.body_html}</p>
+              <p className="font-medium break-words">{s.title}</p>
+              <p className="min-w-0 whitespace-pre-wrap break-words text-sm text-ink">{s.body_html}</p>
               <p className="text-xs text-muted">
                 {s.rights_declared ? t.admin.submissions.rightsDeclared : t.admin.submissions.rightsNotDeclared}
               </p>

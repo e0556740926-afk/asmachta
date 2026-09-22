@@ -255,7 +255,7 @@ export function SharedPanel({ courseId }: { courseId: string }) {
     const hasLink = !!selectedItem.document_id
     const canRetry = hasLink && (isAdmin || selectedItem.uploader_id === profile?.id)
     return (
-      <div className="grid gap-4">
+      <div className="grid min-w-0 gap-4">
         <button
           type="button"
           onClick={() => {
@@ -267,7 +267,7 @@ export function SharedPanel({ courseId }: { courseId: string }) {
           {t.shared.backToFolder}
         </button>
 
-        <div>
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <StatusChip tone={statusTone(selectedItem.status)}>{statusLabel(selectedItem.status)}</StatusChip>
             {selectedItem.type && (
@@ -286,11 +286,11 @@ export function SharedPanel({ courseId }: { courseId: string }) {
           </p>
         )}
 
-        <Card className="grid gap-3">
+        <Card className="grid min-w-0 gap-3">
           {extractingId === selectedItem.id ? (
             <p className="text-sm text-muted">{t.shared.extracting}</p>
           ) : selectedItem.body_html ? (
-            <p className="whitespace-pre-wrap break-words text-sm text-ink">{selectedItem.body_html}</p>
+            <p className="min-w-0 whitespace-pre-wrap break-words text-sm text-ink">{selectedItem.body_html}</p>
           ) : (
             <EmptyState title={t.shared.noTextYet} />
           )}
@@ -491,7 +491,7 @@ export function SharedPanel({ courseId }: { courseId: string }) {
         <div className="grid gap-2">
           <h3 className="text-sm font-medium text-muted">{t.shared.mySection}</h3>
           {mine.map((s) => (
-            <Card key={s.id} className="grid gap-1 p-4">
+            <Card key={s.id} className="grid min-w-0 gap-1 p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="truncate font-medium">{s.title}</p>
                 <StatusChip tone={statusTone(s.status)}>{statusLabel(s.status)}</StatusChip>
@@ -499,7 +499,7 @@ export function SharedPanel({ courseId }: { courseId: string }) {
               {extractingId === s.id ? (
                 <p className="text-sm text-muted">{t.shared.extracting}</p>
               ) : s.body_html ? (
-                <p className="line-clamp-3 whitespace-pre-wrap break-words text-sm text-muted">{s.body_html}</p>
+                <p className="min-w-0 line-clamp-3 whitespace-pre-wrap break-words text-sm text-muted">{s.body_html}</p>
               ) : s.document_id ? (
                 <p className="text-sm text-muted">{t.shared.noTextYet}</p>
               ) : null}
