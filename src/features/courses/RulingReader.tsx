@@ -93,7 +93,7 @@ export function RulingReader({
   const keyPoints = brief?.sections?.keyPoints ?? []
 
   return (
-    <div className="grid gap-4">
+    <div className="ruling-reader grid gap-4">
       <div className="flex items-center justify-between gap-3">
         <button type="button" onClick={onBack} className="text-sm text-brand hover:underline">
           {t.rulingReader.backToList}
@@ -169,7 +169,7 @@ export function RulingReader({
                           key={n}
                           type="button"
                           onClick={() => jumpTo(n)}
-                          className="rounded border border-line px-2 py-0.5 text-xs text-brand hover:bg-tint"
+                          className="rounded border border-line bg-goldbg px-2 py-0.5 text-xs text-gold hover:opacity-80"
                         >
                           <Num>¶{n}</Num> ↗
                         </button>

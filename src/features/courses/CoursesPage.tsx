@@ -21,7 +21,7 @@ export function CoursesPage() {
   }, [])
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10 pb-24 md:px-10">
+    <div className="portal-page mx-auto max-w-5xl px-6 py-10 pb-24 md:px-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl font-medium">{t.courses.title}</h1>

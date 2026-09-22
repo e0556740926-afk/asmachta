@@ -1,0 +1,78 @@
+/* Shared visual layer. Data, permissions and application actions stay in their components. */
+:root { --bg:#f5f7f6; --surface:#ffffff; --soft:#f0f3f1; --ink:#202f28; --muted:#63736a; --line:#dce4de; --brand:#246345; --tint:#e8f0eb; --radius:14px; }
+html.dark { --bg:#111b16; --surface:#19261f; --soft:#213027; --ink:#edf2ed; --muted:#a9b9ad; --line:#34463a; --brand:#85d3ad; --tint:#253f30; }
+* { box-sizing:border-box; }
+button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+button:not(:disabled),a { cursor:pointer; }
+:focus-visible { outline:2px solid var(--brand); outline-offset:4px; }
+::selection { background:var(--tint); color:var(--ink); }
+.portal-shell { line-height:1.6; }
+.portal-rail { background:#173e2d; color:#f3f8f4; border:0; padding:30px 20px; gap:26px; }
+.portal-rail > div:first-child { font-size:29px; gap:12px; }
+.portal-rail > div:first-child > span { background:#f0f7ed; color:#173e2d; width:38px; height:38px; }
+.portal-rail > button { border-color:#ffffff24; background:#ffffff08; color:#c4d6c9; min-height:42px; }
+.portal-rail nav a { color:#d1dfd5; display:flex; align-items:center; gap:13px; padding:12px 14px; border-radius:8px; }
+.portal-rail nav a:hover { background:#ffffff0b; }
+.portal-rail nav a[aria-current] { background:#ffffff12; color:#fff; border-inline-start:3px solid #9dd4a7; }
+.portal-rail > .border-t { border-color:#ffffff24; }
+.rail-label { color:#a7c1af; font-size:11px; margin-bottom:-16px; padding-inline:14px; }
+.rail-icon { font-family:Arial,sans-serif; font-size:21px; width:22px; text-align:center; }
+.portal-topbar { min-height:76px; background:var(--surface); }
+.header-search { display:flex; align-items:center; gap:12px; color:var(--muted); padding:8px 12px; font-size:13px; }
+.header-search kbd { direction:ltr; font-size:10px; border:1px solid var(--line); border-radius:4px; padding:0 4px; }
+.portal-topbar [aria-label="תפריט משתמש"] { max-width:180px; }
+.portal-page { max-width:1240px; padding-top:40px; }
+.page-intro { border-bottom:1px solid var(--line); padding-bottom:26px; }
+.eyebrow { display:block; font-size:11px; color:var(--muted); letter-spacing:.05em; margin-bottom:12px; }
+.portal-page h1 { font-family:var(--font-ui); font-size:clamp(28px,3vw,38px); letter-spacing:-.035em; line-height:1.35; margin-bottom:8px; }
+.home-page > .page-intro > p { display:none; }
+.continue-card { background:var(--surface); color:var(--ink); border:1px solid var(--line); border-inline-start:4px solid var(--brand); padding:30px; position:relative; }
+.continue-card > p:first-child { color:var(--brand); font-size:12px; }
+.continue-card h2 { font-family:var(--font-ui); font-size:26px; margin-block:8px; }
+.continue-card a { background:var(--brand); color:var(--surface); padding:12px 22px; }
+.course-folder { border-radius:0 var(--radius) var(--radius) var(--radius); min-width:0; margin-top:16px; }
+.course-folder::before { content:""; position:absolute; inset-inline-start:-1px; top:-10px; width:78px; height:10px; background:var(--surface); border:1px solid var(--line); border-bottom:0; border-radius:7px 7px 0 0; }
+.course-folder:hover::before { border-color:var(--brand); }
+.course-folder h3 { font-family:var(--font-ui); font-weight:500; font-size:21px; }
+.course-folder > div:last-child { padding-top:18px; border-top:1px solid var(--line); }
+.course-heading { padding:6px 0 24px; }
+.course-tabs { gap:30px; margin-top:-10px; }
+.course-tabs button { padding:13px 2px; min-height:48px; }
+.course-agent { box-shadow:none; border-color:var(--brand); color:var(--brand); }
+.topic-row { padding:18px; background:var(--surface); border:1px solid var(--line); }
+.topic-row:hover { border-color:var(--brand); }
+.document-row > div:first-child { flex:1 1 150px; }
+.document-actions { max-width:100%; }
+.topic-reader { position:relative; }
+.reader-toc { display:flex; flex-wrap:wrap; gap:8px 18px; border-block:1px solid var(--line); padding-block:16px; }
+.reader-toc a { display:flex; gap:8px; align-items:center; font-size:12px; color:var(--brand); }
+.reader-toc bdi { font-family:monospace; color:var(--muted); }
+.reading-section { background:transparent; padding:24px 0; border-bottom:1px solid var(--line); scroll-margin-top:110px; }
+.reading-section > p,.ruling-reader p.whitespace-pre-wrap,.ruling-reader .flex.gap-3 > p { font-family:'Frank Ruhl Libre',Georgia,serif; font-size:20px; line-height:1.95; overflow-wrap:anywhere; }
+.reading-section h3 { font-size:20px; margin-bottom:14px; }
+.reading-section > div:first-child { flex-wrap:wrap; }
+.mobile-navigation { padding-bottom:env(safe-area-inset-bottom); height:calc(64px + env(safe-area-inset-bottom)); }
+.mobile-navigation a { padding:12px 8px; border-radius:8px; }
+.mobile-navigation a[aria-current] { background:var(--tint); font-weight:600; }
+@media(min-width:1200px) {
+ .topic-reader { grid-template-columns:minmax(0,1fr) 180px; min-height:360px; }
+ .topic-reader > * { grid-column:1; }
+ .topic-reader > .reader-toc { grid-column:2; grid-row:1 / span 5; position:sticky; top:100px; align-self:start; display:grid; align-content:start; border:0; border-inline-start:1px solid var(--line); padding-inline-start:18px; }
+}
+@media(max-width:767px) {
+ .portal-topbar { padding:12px 16px; min-height:64px; gap:8px; }
+ .portal-topbar > nav { font-size:12px; }
+ .portal-topbar [aria-label="תפריט משתמש"] > span:last-child { display:none; }
+ .header-search { padding:8px; font-size:24px; }
+ .portal-page { padding:28px 18px 160px; }
+ .portal-page h1 { font-size:29px; }
+ .page-intro { margin-bottom:24px; padding-bottom:20px; }
+ .continue-card { padding:22px; }
+ .course-tabs { gap:24px; }
+ .document-actions { gap:4px; flex-basis:100%; border-top:1px solid var(--line); padding-top:8px; }
+ .topic-reader { padding:20px; }
+ .reading-section > p { font-size:19px; }
+ .course-agent { bottom:calc(80px + env(safe-area-inset-bottom)); }
+ .portal-page > div:first-child.flex { flex-wrap:wrap; gap:16px; }
+}
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }

@@ -277,7 +277,7 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
         ) : (
           <div className="grid gap-2">
             {visible.map((item) => (
-              <Card key={item.id} className="flex items-center justify-between gap-3 p-4">
+              <Card key={item.id} className="document-row flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{item.title}</p>
                   <p className="truncate text-xs text-muted">
@@ -290,7 +290,7 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
                     ) : null}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="document-actions flex flex-wrap items-center gap-2">
                   {isAdmin && (
                     <StatusChip tone={item.status === 'published' ? 'brand' : 'pending'}>
                       {item.status === 'published' ? t.course.statusPublished : t.course.statusDraft}

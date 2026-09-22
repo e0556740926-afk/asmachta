@@ -45,15 +45,15 @@ export function HomePage() {
   }, [])
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10 pb-24 md:px-10">
-      <div className="mb-8">
+    <div className="home-page portal-page mx-auto max-w-5xl px-6 py-10 pb-24 md:px-10">
+      <div className="page-intro mb-8"><span className="eyebrow">מרחב אישי / הלימודים שלי</span>
         <p className="font-medium text-brand">{t.home.title}</p>
         <h1 className="font-display text-4xl font-medium">
           {profile?.display_name ? `שלום, ${profile.display_name}` : t.home.subtitle}
         </h1>
       </div>
 
-      <Card className="mb-6 border-brand bg-brand text-surface">
+      <Card className="continue-card mb-6 border-brand bg-brand text-surface">
         <p className="mb-2 text-sm opacity-80">{t.home.continueTitle}</p>
         {continueItem === undefined ? (
           <Skeleton className="h-16 bg-surface/20" />
@@ -91,7 +91,7 @@ export function HomePage() {
         <Card>
           <p className="mb-1 text-xs text-muted">{t.home.statsCards}</p>
           {stats ? (
-            <p className="font-display text-2xl font-medium text-gold">
+            <p className="font-display text-2xl font-medium text-brand">
               <Num>{stats.cardsDue}</Num>
             </p>
           ) : (

@@ -109,9 +109,9 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-bg text-ink">
-      <div className="grid min-h-screen md:grid-cols-[224px_minmax(0,1fr)]">
-        <aside className="sticky top-0 hidden h-screen flex-col gap-6 border-e border-line bg-surface p-5 md:flex">
+    <div className="portal-shell min-h-screen bg-bg text-ink">
+      <div className="grid min-h-screen md:grid-cols-[240px_minmax(0,1fr)]">
+        <aside className="portal-rail sticky top-0 hidden h-screen flex-col gap-6 border-e border-line bg-surface p-5 md:flex">
           <div className="flex items-center gap-2 font-display text-xl font-medium">
             <span className="grid h-8 w-8 place-items-center rounded-md bg-brand text-surface">א</span>
             {t.appName}
@@ -123,7 +123,7 @@ export function Shell({ children }: { children: ReactNode }) {
           >
             {t.search.placeholder}
           </button>
-          <nav className="grid gap-1">
+          <p className="rail-label">מרחב הלימוד</p><nav aria-label="ניווט ראשי" className="grid gap-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -133,13 +133,32 @@ export function Shell({ children }: { children: ReactNode }) {
                   `rounded-md px-3 py-2 text-sm ${isActive ? 'bg-tint font-semibold text-brand' : 'text-muted hover:bg-soft'}`
                 }
               >
-                {item.label}
+                <span aria-hidden="true" className="rail-icon">{item.to === "/" ? "⌂" : item.to === "/courses" ? "▤" : item.to === "/admin" ? "☷" : "◈"}</span>{item.label}
               </NavLink>
             ))}
           </nav>
           <div className="mt-auto border-t border-line pt-4">
-            <Popover
-              align="start"
+<p className="text-xs opacity-70">מרחב הלימוד שלך למשפטים</p>
+          </div>
+        </aside>
+        <main className="min-w-0">
+          <div className="portal-topbar sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line bg-surface/90 px-6 py-3 backdrop-blur md:px-10">
+            <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1 text-sm text-muted">
+              {crumbs.map((crumb, i) => (
+                <span key={i} className="flex min-w-0 items-center gap-1">
+                  {i > 0 && <span aria-hidden="true">‹</span>}
+                  {crumb.to ? (
+                    <NavLink to={crumb.to} className="truncate hover:text-brand">
+                      {crumb.label}
+                    </NavLink>
+                  ) : (
+                    <span className="truncate text-ink">{crumb.label}</span>
+                  )}
+                </span>
+              ))}
+            </nav>
+            <div className="flex shrink-0 items-center gap-1"><button type="button" className="header-search" aria-label={t.search.placeholder} onClick={() => setSearchOpen(true)}>⌕ <span className="hidden lg:inline">חיפוש במרחב הלימוד</span><kbd className="hidden lg:inline">Ctrl K</kbd></button>            <Popover
+              align="end"
               trigger={({ toggle }) => (
                 <button
                   type="button"
@@ -192,25 +211,6 @@ export function Shell({ children }: { children: ReactNode }) {
                 </button>
               </div>
             </Popover>
-          </div>
-        </aside>
-        <main className="min-w-0">
-          <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line bg-surface/90 px-6 py-3 backdrop-blur md:px-10">
-            <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1 text-sm text-muted">
-              {crumbs.map((crumb, i) => (
-                <span key={i} className="flex min-w-0 items-center gap-1">
-                  {i > 0 && <span aria-hidden="true">‹</span>}
-                  {crumb.to ? (
-                    <NavLink to={crumb.to} className="truncate hover:text-brand">
-                      {crumb.label}
-                    </NavLink>
-                  ) : (
-                    <span className="truncate text-ink">{crumb.label}</span>
-                  )}
-                </span>
-              ))}
-            </nav>
-            <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 onClick={() => openAgent()}
@@ -240,7 +240,7 @@ export function Shell({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-line bg-surface md:hidden">
+      <nav aria-label="ניווט ראשי בנייד" className="mobile-navigation fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-line bg-surface md:hidden">
         {navItems.map((item) => (
           <NavLink
             key={item.to}

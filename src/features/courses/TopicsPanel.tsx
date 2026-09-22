@@ -108,7 +108,7 @@ export function TopicsPanel({ courseId, refreshKey }: { courseId: string; refres
               key={tp.id}
               type="button"
               onClick={() => handleOpenTopic(tp.id)}
-              className="flex items-center justify-between gap-3 rounded-md bg-soft p-3 text-start text-sm hover:bg-tint"
+              className="topic-row flex items-center justify-between gap-3 rounded-md bg-soft p-3 text-start text-sm hover:bg-tint"
             >
               <span className="truncate font-medium">{tp.title}</span>
               <span className="shrink-0 text-xs text-muted">
@@ -215,7 +215,7 @@ function TopicDetail({
   }
 
   return (
-    <Card className="grid gap-4">
+    <Card className="topic-reader grid gap-4">
       <div className="flex items-center justify-between gap-3">
         <button type="button" onClick={onBack} className="text-sm text-brand hover:underline">
           {t.topics.backToTopics}
@@ -260,6 +260,7 @@ function TopicDetail({
         </div>
       )}
 
+      <nav className="reader-toc" aria-label="תוכן עניינים">{topic.topic_sections.map((section, index) => <a key={section.id} href={`#section-${section.id}`}><bdi>{String(index + 1).padStart(2, "0")}</bdi>{section.heading || `סעיף ${index + 1}`}</a>)}</nav>
       {topic.topic_sections.length === 0 ? (
         <EmptyState title={t.topics.empty} />
       ) : (
@@ -291,7 +292,7 @@ function TopicDetail({
                 </div>
               </div>
             ) : (
-              <div key={s.id} className="grid gap-1 rounded-md bg-soft p-4">
+              <div key={s.id} id={`section-${s.id}`} className="reading-section grid gap-1 rounded-md bg-soft p-4">
                 <div className="flex items-start justify-between gap-3">
                   {s.heading && <h3 className="font-medium">{s.heading}</h3>}
                   {isAdmin && (
