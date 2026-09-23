@@ -75,12 +75,14 @@ export const t = {
   course: {
     tabs: {
       summaries: 'סיכומים',
-      rulings: 'פסקי דין וחקיקה',
+      rulings: 'פסקי דין',
+      legislation: 'חקיקה',
       practice: 'תרגול',
       shared: 'שיתופי',
     },
     emptySummaries: 'עדיין אין סיכומים בקורס הזה.',
-    emptyRulings: 'עדיין לא הועלו פסקי דין או חקיקה.',
+    emptyRulings: 'עדיין לא הועלו פסקי דין.',
+    emptyLegislation: 'עדיין לא הועלתה חקיקה בקורס הזה.',
     emptyPractice: 'תרגול ייפתח לאחר שיעלו סיכומים.',
     emptyShared: 'עדיין אין חומר שיתופי בקורס הזה.',
     agentBar: 'שאלו את הסוכן על הקורס הזה…',
@@ -162,6 +164,32 @@ export const t = {
     generateErrorExtractFailed: 'לא הצלחתי לחלץ טקסט מהקובץ הזה. פורמטים נתמכים: PDF, Word (‎.docx), טקסט.',
     noParagraphsYet: 'עדיין לא חולק פסק הדין לפסקאות ממוספרות.',
     demoTextNotice: 'הפסקאות שלהלן חולצו אוטומטית מהמסמך שהועלה.',
+    // Manual processing bypass for rulings — same idea as topics.manual* (Summaries), with wording
+    // specific to a single ruling. No "topic" matching involved, so no reason field either — the
+    // JSON is just an ordered list of {heading, content} parts.
+    manualProcess: 'עיבוד ידני',
+    manualIntro:
+      'אם שירות ה-AI המובנה ממשיך להיכשל או להיות עמוס — אפשר להכין את התמצית ידנית: להעתיק את הפרומפט הבא, להדביק אותו בכל שירות AI (ChatGPT, Claude וכו׳), ולהעלות כאן את קובץ ה-JSON שיחזיר. הפסקאות הממוספרות בטקסט המקור יופקו אוטומטית מהטקסט עצמו, בלי צורך ב-AI לשלב הזה.',
+    manualPartsCount: 'חלקים בתמצית',
+  },
+  legislationReader: {
+    backToList: '→ חזרה לרשימת החקיקה',
+    aiBrief: 'תמצית מאורגנת',
+    originalText: 'טקסט המקור',
+    noBriefYet: 'עדיין אין תמצית לטקסט החקיקה הזה.',
+    noTextYet: 'עדיין לא חולץ טקסט מהמסמך הזה.',
+    generateBrief: 'ארגון עם AI',
+    regenerateBrief: 'ארגון מחדש',
+    generating: 'קורא את הטקסט ומארגן אותו לחלקים…',
+    generateErrorGeneric: 'לא הצלחתי לארגן את טקסט החקיקה הזה. נסו שוב מאוחר יותר.',
+    generateErrorBusy: 'שירות ה-AI עמוס כרגע — אפשר לנסות שוב בעוד רגע.',
+    generateErrorGoogleDoc: 'לא הצלחתי לקרוא את מסמך ה-Google Docs. ודאו שההרשאה מוגדרת ל״כל בעל הקישור יכול לצפות״ ונסו שוב.',
+    generateErrorExtractFailed: 'לא הצלחתי לחלץ טקסט מהקובץ הזה. פורמטים נתמכים: PDF, Word (‎.docx), טקסט.',
+    // Manual processing bypass — same simple shape (no paragraph citations) as the automatic path.
+    manualProcess: 'עיבוד ידני',
+    manualIntro:
+      'אם שירות ה-AI המובנה ממשיך להיכשל או להיות עמוס — אפשר לארגן את הטקסט ידנית: להעתיק את הפרומפט הבא, להדביק אותו בכל שירות AI (ChatGPT, Claude וכו׳), ולהעלות כאן את קובץ ה-JSON שיחזיר.',
+    manualPartsCount: 'חלקים בתמצית',
   },
   shared: {
     intro: 'כאן אפשר לשתף תוכן עם שאר הסטודנטים בקורס — הערה, שאלה או סיכום קצר. כל שיתוף עובר אישור מנהל לפני שהוא מוצג לכולם.',

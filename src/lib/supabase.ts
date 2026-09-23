@@ -158,6 +158,39 @@ export type RulingBriefRow = {
 }
 
 // ============================================================
+// Legislation: a simpler sibling of rulings — one document, one ordered brief
+// (heading + content parts, no paragraph numbering/citation — see migration 0007).
+// ============================================================
+
+export type Legislation = {
+  id: string
+  title: string
+  document_id: string | null
+  full_text: string | null
+  brief_status: 'none' | 'ai' | 'reviewed'
+  created_at: string
+}
+
+/** A course_legislation row joined through to the legislation item + underlying document + blob. */
+export type CourseLegislationWithFile = {
+  id: string
+  course_id: string
+  legislation_id: string
+  legislation: (Legislation & { documents: (DocumentRow & { blobs: BlobRow | null }) | null }) | null
+}
+
+export type LegislationBriefPart = { heading: string; content: string }
+
+export type LegislationBriefRow = {
+  id: string
+  legislation_id: string
+  sections: { parts: LegislationBriefPart[] } | null
+  model: string | null
+  created_at: string
+  updated_at: string
+}
+
+// ============================================================
 // Practice: flashcards + quizzes
 // ============================================================
 

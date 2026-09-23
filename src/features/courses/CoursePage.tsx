@@ -4,6 +4,7 @@ import { supabase, type Course } from '../../lib/supabase'
 import { useAgentPanel } from '../../components/agent/AgentPanelContext'
 import { SummariesPanel } from './SummariesPanel'
 import { RulingsPanel } from './RulingsPanel'
+import { LegislationPanel } from './LegislationPanel'
 import { PracticePanel } from './PracticePanel'
 import { SharedPanel } from './SharedPanel'
 import { t } from '../../i18n/he'
@@ -11,6 +12,7 @@ import { t } from '../../i18n/he'
 const TABS = [
   { key: 'summaries', label: t.course.tabs.summaries, empty: t.course.emptySummaries },
   { key: 'rulings', label: t.course.tabs.rulings, empty: t.course.emptyRulings },
+  { key: 'legislation', label: t.course.tabs.legislation, empty: t.course.emptyLegislation },
   { key: 'practice', label: t.course.tabs.practice, empty: t.course.emptyPractice },
   { key: 'shared', label: t.course.tabs.shared, empty: t.course.emptyShared },
 ] as const
@@ -56,6 +58,8 @@ export function CoursePage() {
         <SummariesPanel courseId={course.id} />
       ) : active.key === 'rulings' ? (
         <RulingsPanel courseId={course.id} />
+      ) : active.key === 'legislation' ? (
+        <LegislationPanel courseId={course.id} />
       ) : active.key === 'practice' ? (
         <PracticePanel courseId={course.id} courseTitle={course.title} />
       ) : (

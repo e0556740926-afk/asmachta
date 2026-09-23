@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { supabase, type CourseRulingWithFile } from '../../lib/supabase'
+import { supabase, type CourseLegislationWithFile } from '../../lib/supabase'
 import { useAuth } from '../../app/AuthContext'
 import { Button } from '../../components/ui/Button'
 import { Card, EmptyState, Skeleton, Num } from '../../components/ui/Primitives'
 import { addExternalDocument, getDownloadUrl, uploadDocument } from '../../lib/upload'
 import { extractTextFromFile } from '../../lib/extractText'
 import {
-  applyManualRulingSegments,
-  buildManualRulingPrompt,
-  generateRulingBrief,
-  parseManualRulingSegments,
-} from '../../lib/rulings'
-import { RulingReader } from './RulingReader'
+  applyManualLegislationSegments,
+  buildManualLegislationPrompt,
+  generateLegislationBrief,
+  parseManualLegislationSegments,
+} from '../../lib/legislation'
+import { LegislationReader } from './LegislationReader'
 import { t } from '../../i18n/he'
 
 function formatBytes(bytes?: number): string {
@@ -23,26 +23,26 @@ function formatBytes(bytes?: number): string {
 function mapGenerateError(code: string): string {
   switch (code) {
     case 'upstream_busy':
-      return t.rulingReader.generateErrorBusy
+      return t.legislationReader.generateErrorBusy
     case 'google_doc_not_accessible':
-      return t.rulingReader.generateErrorGoogleDoc
+      return t.legislationReader.generateErrorGoogleDoc
     case 'empty_text':
-      return t.rulingReader.generateErrorExtractFailed
+      return t.legislationReader.generateErrorExtractFailed
     default:
-      return t.rulingReader.generateErrorGeneric
+      return t.legislationReader.generateErrorGeneric
   }
 }
 
 /**
- * Rulings & legislation tab: admin attaches a document (file or Google Docs link) to the course as
- * a `rulings` row (+ `course_rulings` join). Every attached ruling is automatically split into
- * numbered, citable paragraphs with an AI brief (ruling_paragraphs / ruling_briefs, wired up here
- * for the first time); clicking a ruling opens a reader with the brief and source text side by side.
+ * Legislation tab: admin attaches a document (file or Google Docs link) to the course as a
+ * `legislation` row (+ `course_legislation` join). A simple AI brief (ordered heading+content
+ * parts, no paragraph citations — see migration 0007) is generated automatically; clicking an item
+ * opens a reader with the brief and full source text.
  */
-export function RulingsPanel({ courseId }: { courseId: string }) {
+export function LegislationPanel({ courseId }: { courseId: string }) {
   const { profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
-  const [items, setItems] = useState<CourseRulingWithFile[] | null>(null)
+  const [items, setItems] = useState<CourseLegislationWithFile[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [linkMode, setLinkMode] = useState(false)
@@ -55,25 +55,21 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
   const [genError, setGenError] = useState<string | null>(null)
   const [openItemId, setOpenItemId] = useState<string | null>(null)
 
-  // Manual processing — bypass Gemini: build a simple prompt (no paragraph citations), let the
-  // admin run it through any AI chat by hand, and upload the JSON it returns (see lib/rulings.ts's
-  // applyManualRulingSegments). manualTextRef holds the extracted full text alongside the prompt so
-  // the apply step can still deterministically split it into numbered paragraphs.
   const [manualOpenId, setManualOpenId] = useState<string | null>(null)
   const [manualPrompt, setManualPrompt] = useState('')
   const manualTextRef = useRef('')
   const [manualBusy, setManualBusy] = useState(false)
   const [manualError, setManualError] = useState<string | null>(null)
   const [manualCopied, setManualCopied] = useState(false)
-  const [manualResult, setManualResult] = useState<{ paragraphCount: number; partsCount: number } | null>(null)
+  const [manualResult, setManualResult] = useState<{ partsCount: number } | null>(null)
 
   async function load() {
     const { data } = await supabase
-      .from('course_rulings')
-      .select('*, rulings(*, documents(*, blobs(*)))')
+      .from('course_legislation')
+      .select('*, legislation(*, documents(*, blobs(*)))')
       .eq('course_id', courseId)
-    const rows = ((data as CourseRulingWithFile[] | null) ?? []).slice()
-    rows.sort((a, b) => (b.rulings?.created_at ?? '').localeCompare(a.rulings?.created_at ?? ''))
+    const rows = ((data as CourseLegislationWithFile[] | null) ?? []).slice()
+    rows.sort((a, b) => (b.legislation?.created_at ?? '').localeCompare(a.legislation?.created_at ?? ''))
     setItems(rows)
   }
 
@@ -83,27 +79,27 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
   }, [courseId])
 
   async function attachToCourse(documentId: string, title: string): Promise<string> {
-    const { data: ruling, error: rulingError } = await supabase
-      .from('rulings')
+    const { data: item, error: itemError } = await supabase
+      .from('legislation')
       .insert({ title, document_id: documentId })
       .select('id')
       .single()
-    if (rulingError) throw rulingError
-    const rulingId = (ruling as { id: string }).id
-    const { error: linkError } = await supabase.from('course_rulings').insert({ course_id: courseId, ruling_id: rulingId })
+    if (itemError) throw itemError
+    const legislationId = (item as { id: string }).id
+    const { error: linkError } = await supabase.from('course_legislation').insert({ course_id: courseId, legislation_id: legislationId })
     if (linkError) throw linkError
-    return rulingId
+    return legislationId
   }
 
-  async function runGenerate(rulingId: string, source: { text: string } | { googleDocsUrl: string }) {
+  async function runGenerate(legislationId: string, source: { text: string } | { googleDocsUrl: string }) {
     setGenerating(true)
     setGenError(null)
     try {
-      const result = await generateRulingBrief(rulingId, source)
+      const result = await generateLegislationBrief(legislationId, source)
       if ('error' in result) setGenError(mapGenerateError(result.error))
       else await load()
     } catch {
-      setGenError(t.rulingReader.generateErrorGeneric)
+      setGenError(t.legislationReader.generateErrorGeneric)
     } finally {
       setGenerating(false)
     }
@@ -116,11 +112,11 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
     setBusy(true)
     setError(null)
     setGenError(null)
-    let rulingId: string | null = null
+    let legislationId: string | null = null
     try {
-      const { documentId } = await uploadDocument(file, { kind: 'ruling', ownerId: profile.id, visibility: 'core' })
+      const { documentId } = await uploadDocument(file, { kind: 'law', ownerId: profile.id, visibility: 'core' })
       const title = fileTitle.trim() || file.name.replace(/\.[^./]+$/, '')
-      rulingId = await attachToCourse(documentId, title)
+      legislationId = await attachToCourse(documentId, title)
       setFileTitle('')
       await load()
     } catch {
@@ -129,10 +125,10 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
       setBusy(false)
     }
 
-    if (rulingId) {
+    if (legislationId) {
       const text = await extractTextFromFile(file)
-      if (!text) setGenError(t.rulingReader.generateErrorExtractFailed)
-      else await runGenerate(rulingId, { text })
+      if (!text) setGenError(t.legislationReader.generateErrorExtractFailed)
+      else await runGenerate(legislationId, { text })
     }
   }
 
@@ -150,11 +146,11 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
     setBusy(true)
     setError(null)
     setGenError(null)
-    let rulingId: string | null = null
+    let legislationId: string | null = null
     const urlForGenerate = linkUrl.trim()
     try {
-      const { documentId } = await addExternalDocument(linkUrl, { kind: 'ruling', ownerId: profile.id, visibility: 'core' })
-      rulingId = await attachToCourse(documentId, linkTitle.trim())
+      const { documentId } = await addExternalDocument(linkUrl, { kind: 'law', ownerId: profile.id, visibility: 'core' })
+      legislationId = await attachToCourse(documentId, linkTitle.trim())
       setLinkTitle('')
       setLinkUrl('')
       setLinkMode(false)
@@ -165,41 +161,38 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
       setBusy(false)
     }
 
-    if (rulingId) await runGenerate(rulingId, { googleDocsUrl: urlForGenerate })
+    if (legislationId) await runGenerate(legislationId, { googleDocsUrl: urlForGenerate })
   }
 
-  // Retry brief generation for an already-attached ruling — same purpose as the "reorganize"
-  // button in SummariesPanel, surfaced here in the list too (not only inside the reader) so a
-  // failed/never-run generation (e.g. Gemini was overloaded right after upload) is one click away.
-  async function onReorganize(item: CourseRulingWithFile) {
-    const ruling = item.rulings
-    const doc = ruling?.documents
-    if (!ruling) return
+  async function onReorganize(item: CourseLegislationWithFile) {
+    const legislation = item.legislation
+    const doc = legislation?.documents
+    if (!legislation) return
     setGenerating(true)
     setGenError(null)
     try {
-      let result: Awaited<ReturnType<typeof generateRulingBrief>>
+      let result: Awaited<ReturnType<typeof generateLegislationBrief>>
       if (doc?.external_url) {
-        result = await generateRulingBrief(ruling.id, { googleDocsUrl: doc.external_url })
+        result = await generateLegislationBrief(legislation.id, { googleDocsUrl: doc.external_url })
       } else if (doc?.blobs?.storage_path) {
         const url = await getDownloadUrl(doc.blobs.storage_path)
         const res = await fetch(url)
         const blob = await res.blob()
-        const filename = doc.original_filename || ruling.title || 'ruling'
+        const filename = doc.original_filename || legislation.title || 'legislation'
         const file = new File([blob], filename, { type: doc.blobs.mime })
         const text = await extractTextFromFile(file)
         if (!text) {
-          setGenError(t.rulingReader.generateErrorExtractFailed)
+          setGenError(t.legislationReader.generateErrorExtractFailed)
           return
         }
-        result = await generateRulingBrief(ruling.id, { text })
+        result = await generateLegislationBrief(legislation.id, { text })
       } else {
         return
       }
       if ('error' in result) setGenError(mapGenerateError(result.error))
       else await load()
     } catch {
-      setGenError(t.rulingReader.generateErrorGeneric)
+      setGenError(t.legislationReader.generateErrorGeneric)
     } finally {
       setGenerating(false)
     }
@@ -214,18 +207,15 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
     setManualCopied(false)
   }
 
-  async function onOpenManual(item: CourseRulingWithFile) {
-    const ruling = item.rulings
-    const doc = ruling?.documents
-    if (!ruling) return
+  async function onOpenManual(item: CourseLegislationWithFile) {
+    const legislation = item.legislation
+    const doc = legislation?.documents
+    if (!legislation) return
     setManualOpenId(item.id)
     setManualBusy(true)
     setManualError(null)
     setManualResult(null)
     setManualCopied(false)
-    // Clear any prompt left over from a previously-opened item — otherwise, while this item's text
-    // is still being fetched/extracted, the textarea below would keep showing the previous one's
-    // prompt (see the identical fix in SummariesPanel's onOpenManual).
     setManualPrompt('')
     manualTextRef.current = ''
     try {
@@ -240,18 +230,18 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
         const url = await getDownloadUrl(doc.blobs.storage_path)
         const res = await fetch(url)
         const blob = await res.blob()
-        const filename = doc.original_filename || ruling.title || 'ruling'
+        const filename = doc.original_filename || legislation.title || 'legislation'
         const file = new File([blob], filename, { type: doc.blobs.mime })
         text = await extractTextFromFile(file)
       }
       if (!text || !text.trim()) {
-        setManualError(t.rulingReader.generateErrorExtractFailed)
+        setManualError(t.legislationReader.generateErrorExtractFailed)
         return
       }
       manualTextRef.current = text.trim()
-      setManualPrompt(buildManualRulingPrompt(ruling.title ?? '', text.trim()))
+      setManualPrompt(buildManualLegislationPrompt(legislation.title ?? '', text.trim()))
     } catch {
-      setManualError(t.rulingReader.generateErrorGeneric)
+      setManualError(t.legislationReader.generateErrorGeneric)
     } finally {
       setManualBusy(false)
     }
@@ -267,24 +257,24 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
     }
   }
 
-  async function onManualFilePicked(item: CourseRulingWithFile, e: React.ChangeEvent<HTMLInputElement>) {
+  async function onManualFilePicked(item: CourseLegislationWithFile, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file || !item.ruling_id) return
+    if (!file || !item.legislation_id) return
     setManualBusy(true)
     setManualError(null)
     setManualResult(null)
     try {
       const raw = await file.text()
-      let segments: ReturnType<typeof parseManualRulingSegments>
+      let segments: ReturnType<typeof parseManualLegislationSegments>
       try {
-        segments = parseManualRulingSegments(JSON.parse(raw))
+        segments = parseManualLegislationSegments(JSON.parse(raw))
       } catch {
         setManualError(t.topics.manualParseError)
         return
       }
       try {
-        const result = await applyManualRulingSegments(item.ruling_id, manualTextRef.current, segments)
+        const result = await applyManualLegislationSegments(item.legislation_id, manualTextRef.current, segments)
         setManualResult(result)
         await load()
       } catch {
@@ -295,8 +285,8 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
     }
   }
 
-  async function onOpen(item: CourseRulingWithFile) {
-    const doc = item.rulings?.documents
+  async function onOpen(item: CourseLegislationWithFile) {
+    const doc = item.legislation?.documents
     if (doc?.external_url) {
       window.open(doc.external_url, '_blank', 'noopener,noreferrer')
       return
@@ -314,9 +304,9 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
     }
   }
 
-  async function onDelete(item: CourseRulingWithFile) {
-    if (!item.ruling_id) return
-    await supabase.from('rulings').delete().eq('id', item.ruling_id)
+  async function onDelete(item: CourseLegislationWithFile) {
+    if (!item.legislation_id) return
+    await supabase.from('legislation').delete().eq('id', item.legislation_id)
     if (openItemId === item.id) setOpenItemId(null)
     await load()
   }
@@ -324,7 +314,7 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
   const openItem = items?.find((it) => it.id === openItemId) ?? null
 
   if (openItem) {
-    return <RulingReader item={openItem} isAdmin={isAdmin} onBack={() => setOpenItemId(null)} />
+    return <LegislationReader item={openItem} isAdmin={isAdmin} onBack={() => setOpenItemId(null)} />
   }
 
   return (
@@ -373,7 +363,7 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
         </div>
       )}
       {(generating || genError) && (
-        <p className={`text-sm ${genError ? 'text-red-600' : 'text-muted'}`}>{genError ?? t.rulingReader.generating}</p>
+        <p className={`text-sm ${genError ? 'text-red-600' : 'text-muted'}`}>{genError ?? t.legislationReader.generating}</p>
       )}
       {items === null ? (
         <div className="grid gap-2">
@@ -381,20 +371,16 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
           <Skeleton className="h-16" />
         </div>
       ) : items.length === 0 ? (
-        <EmptyState title={t.course.emptyRulings} />
+        <EmptyState title={t.course.emptyLegislation} />
       ) : (
         <div className="grid gap-2">
           {items.map((item) => {
-            const doc = item.rulings?.documents
+            const doc = item.legislation?.documents
             return (
               <div key={item.id} className="grid gap-2">
                 <Card className="flex items-center justify-between gap-3 p-4">
-                  <button
-                    type="button"
-                    onClick={() => setOpenItemId(item.id)}
-                    className="min-w-0 flex-1 text-start"
-                  >
-                    <p className="truncate font-medium hover:underline">{item.rulings?.title}</p>
+                  <button type="button" onClick={() => setOpenItemId(item.id)} className="min-w-0 flex-1 text-start">
+                    <p className="truncate font-medium hover:underline">{item.legislation?.title}</p>
                     <p className="truncate text-xs text-muted">
                       {doc?.external_url ? 'Google Docs' : doc?.original_filename}
                       {doc?.blobs?.bytes ? (
@@ -412,14 +398,14 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
                     {isAdmin && (
                       <>
                         <Button type="button" variant="quiet" onClick={() => onReorganize(item)} disabled={generating}>
-                          {t.rulingReader.regenerateBrief}
+                          {t.legislationReader.regenerateBrief}
                         </Button>
                         <Button
                           type="button"
                           variant="quiet"
                           onClick={() => (manualOpenId === item.id ? closeManual() : onOpenManual(item))}
                         >
-                          {t.rulingReader.manualProcess}
+                          {t.legislationReader.manualProcess}
                         </Button>
                         <Button type="button" variant="quiet" onClick={() => onDelete(item)}>
                           {t.course.deleteFile}
@@ -431,7 +417,7 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
 
                 {manualOpenId === item.id && (
                   <Card className="grid gap-3 p-4">
-                    <p className="text-sm text-muted">{t.rulingReader.manualIntro}</p>
+                    <p className="text-sm text-muted">{t.legislationReader.manualIntro}</p>
                     {manualBusy && !manualPrompt && <p className="text-sm text-muted">{t.topics.manualExtracting}</p>}
                     {manualPrompt && (
                       <>
@@ -455,7 +441,7 @@ export function RulingsPanel({ courseId }: { courseId: string }) {
                     {manualError && <p className="text-sm text-red-600">{manualError}</p>}
                     {manualResult && (
                       <p className="text-sm text-brand">
-                        {t.topics.manualSuccess}: <Num>{manualResult.partsCount}</Num> {t.rulingReader.manualPartsCount}
+                        {t.topics.manualSuccess}: <Num>{manualResult.partsCount}</Num> {t.legislationReader.manualPartsCount}
                       </p>
                     )}
                     <Button type="button" variant="quiet" onClick={closeManual} className="justify-self-start">
