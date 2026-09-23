@@ -207,6 +207,11 @@ export function SummariesPanel({ courseId }: { courseId: string }) {
     setManualError(null)
     setManualResult(null)
     setManualCopied(false)
+    // Clear any prompt left over from a previously-opened document — otherwise, while this
+    // document's text is still being fetched/extracted, the textarea below keeps showing the
+    // stale prompt (since it only renders a loading state when manualPrompt is empty), and a
+    // user who copies quickly ends up sending the wrong document's text to the AI.
+    setManualPrompt('')
     try {
       let text: string | null = null
       if (item.documents?.external_url) {
